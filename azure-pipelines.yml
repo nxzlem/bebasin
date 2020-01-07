@@ -1,0 +1,24 @@
+resources:
+  repositories:
+    - repository: rust_pipelines
+      type: github
+      name: xoac/rust-azure-pipelines
+      ref: refs/tags/v0.1.0-alpha.2
+      endpoint: andraantariksa
+
+stages:
+  - stage: test
+    displayName: "Multi OS native tests"
+    jobs:
+    - template: ci/scenarios/test.yml@rust_pipelines
+      parameters:
+        min_rust_supported: 1.31
+
+  - stage: build
+    displayName: "Builds"
+    dependsOn:
+    - test 
+    jobs:
+    - template: ci/scenarios/builds.yml@rust_pipelines 
+      parameters:
+        artifactName: target
