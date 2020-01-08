@@ -126,6 +126,7 @@ dependencies = [
  "structopt",
  "surf",
  "tui",
+ "winapi 0.3.8",
 ]
 
 [[package]]

@@ -8,17 +8,33 @@ resources:
 
 stages:
   - stage: test
-    displayName: "Multi OS native tests"
+    displayName: "Tests"
     jobs:
-    - template: ci/scenarios/test.yml@rust_pipelines
+    - template: ci/jobs/cargo-test.yaml@rust_pipelines
       parameters:
-        min_rust_supported: 1.31
+        test-flags:
+          nocapture: true
+        job_strategy:
+          matrix:
+            Linux:
+              vmImage: ubuntu-16.04
+            Windows:
+              vmImage: vs2017-win2016
 
   - stage: build
     displayName: "Builds"
     dependsOn:
-    - test 
+    - test
     jobs:
-    - template: ci/scenarios/builds.yml@rust_pipelines 
+    - template: ci/jobs/cargo-build.yml@rust_pipelines 
       parameters:
         artifactName: target
+        test-flags:
+          nocapture: true
+        builds:
+        - target: x86_64-unknown-linux-gnu 
+          name: x86_64_unknown_linux_gnu
+          pre-steps: []
+        - target: x86_64-pc-windows-msvc
+          name: x86_64_pc_windows_msvc
+          pre-steps: []

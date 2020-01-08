@@ -14,3 +14,7 @@ nix = "0.16.1"
 surf = "1.0.3"
 structopt = "0.3.0"
 tui = { version = "0.8", default-features = false, features = ['crossterm'] }
+
+[dependencies.winapi]
+version = "0.3.8"
+features = ["handleapi", "processthreadsapi", "winnt", "securitybaseapi", "impl-default"]
