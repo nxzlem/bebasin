@@ -13,7 +13,13 @@ directories = "2.0.2"
 nix = "0.16.1"
 surf = "1.0.3"
 structopt = "0.3.0"
-tui = { version = "0.8", default-features = false, features = ['crossterm'] }
+webbrowser = "0.5.2"
+
+[dependencies.cursive]
+# version = "0.13.0"
+git = "https://github.com/gyscos/cursive.git"
+default-features = false
+features = ["crossterm-backend"]
 
 [dependencies.winapi]
 version = "0.3.8"

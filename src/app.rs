@@ -1,125 +1,83 @@
-use crate::HOST_URL;
-use async_std::task;
-use crossterm::event::{self, Event, KeyCode};
-use std::fs;
-use tui::layout::{Alignment, Constraint, Direction, Layout};
-use tui::style::{Color, Modifier, Style};
-use tui::widgets::{Block, Borders, Paragraph, SelectableList, Text, Widget};
+use crate::hosts;
+use cursive::event::Key;
+use cursive::traits::*;
+use cursive::views::{
+    Button, Checkbox, Dialog, DummyView, EditView, Layer, LinearLayout, ListView, SelectView,
+    TextView,
+};
+use cursive::Cursive;
 
-// TODO
-
-fn is_installed() -> bool {
-    fs::read_to_string("/etc/hosts")
-        .expect("Error when reading /etc/hosts file")
-        .contains("# # Bebasin")
+pub struct App {
+    cursive: Cursive,
 }
 
-fn backup_restore() {
-    let home_dir = directories::UserDirs::new();
-    let mut hd = home_dir.unwrap().home_dir().to_owned();
-    hd.push("backup-hosts");
-    fs::remove_file("/etc/hosts").expect("Error when removing /etc/hosts file");
-    fs::copy(hd, "/etc/hosts").unwrap();
+fn install(s: &mut Cursive) {
+    if hosts::is_installed() {
+        s.add_layer(Dialog::info("Bebasin has been installed"));
+    } else {
+        s.add_layer(Dialog::info("Bebasin is not installed"));
+    }
 }
 
-fn download() {
-    task::block_on(async {
-        let hosts_content = surf::get(HOST_URL)
-            .recv_bytes()
-            .await
-            .expect("Error when retrieving the hosts file");
-        fs::File::create("temp-hosts").expect("Error when creating the hosts temprorary file");
-        fs::write("temp-hosts", hosts_content)
-            .expect("Error when writing to the hosts temprorary file");
-    });
+fn uninstall(s: &mut Cursive) {
+    if hosts::backup_path().exists() {
+    } else {
+        s.add_layer(Dialog::info("No hosts backup file found!"));
+    }
 }
 
-fn backup() {
-    let home_dir = directories::UserDirs::new();
-    let mut hd = home_dir.unwrap().home_dir().to_owned();
-    hd.push("backup-hosts");
-    fs::copy("/etc/hosts", hd).unwrap();
+fn on_submit(s: &mut Cursive, name: &str) {
+    s.pop_layer();
+    s.add_layer(
+        Dialog::text(format!("Name: {}\nAwesome: yes", name))
+            .title(format!("{}'s info", name))
+            .button("Quit", Cursive::quit),
+    );
 }
 
-pub struct App<'a> {
-    menu_items: Vec<&'a str>,
-    menu_items_selected: usize,
+fn open_repository(s: &mut Cursive) {
+    if webbrowser::open("https://github.com/andraantariksa/bebasin").is_err() {
+        s.add_layer(
+            Dialog::text("Can't open any browser")
+                .title("Error")
+                .button("Ok", |cur| {
+                    cur.pop_layer();
+                }),
+        );
+    }
 }
 
-impl<'a> App<'a> {
-    pub fn new() -> App<'a> {
-        App {
-            menu_items: vec!["Install", "Uninstall"],
-            menu_items_selected: 0,
+impl App {
+    pub fn new() -> Self {
+        Self {
+            cursive: Cursive::crossterm().unwrap(),
         }
     }
 
-    pub fn dispatch(
-        &mut self,
-        term: &mut tui::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>>,
-    ) {
-        loop {
-            term.draw(|mut f| {
-                let layout = Layout::default()
-                    .direction(Direction::Horizontal)
-                    .constraints(vec![Constraint::Percentage(50), Constraint::Percentage(50)])
-                    .split(f.size());
-                let layout_inner_right = Layout::default()
-                    .direction(Direction::Vertical)
-                    .constraints(vec![Constraint::Percentage(50), Constraint::Percentage(50)])
-                    .margin(10)
-                    .split(f.size());
+    fn display_main(&mut self) {
+        let text_header =
+            TextView::new("If you found any issue, please create a new issue on the repository");
+        let menu_buttons = LinearLayout::vertical()
+            .child(Button::new("Install", install))
+            .child(Button::new("Update", uninstall))
+            .child(Button::new("Repository", open_repository))
+            .child(DummyView)
+            .child(Button::new("Quit", Cursive::quit));
+        self.cursive.add_layer(
+            Dialog::around(
+                LinearLayout::vertical()
+                    .child(text_header)
+                    .child(DummyView)
+                    .child(menu_buttons),
+            )
+            .title("Menu"),
+        );
+    }
 
-                let block_style = Block::default()
-                    .borders(Borders::ALL)
-                    .title_style(Style::default().modifier(Modifier::BOLD));
-                let style = Style::default().fg(Color::White).bg(Color::Black);
-                SelectableList::default()
-                    .block(block_style.title("Menu"))
-                    .items(&self.menu_items)
-                    .select(Some(self.menu_items_selected))
-                    .style(style)
-                    .highlight_style(style.fg(Color::LightGreen).modifier(Modifier::BOLD))
-                    .highlight_symbol(">")
-                    .render(&mut f, layout[0]);
-                let info_text = vec![
-                    Text::raw("Bebasin v0.1\n"),
-                    Text::raw("Press \"q\" to quit\n"),
-                ];
-                Paragraph::new(info_text.iter())
-                    .block(block_style.title("Information"))
-                    .alignment(Alignment::Left)
-                    .render(&mut f, layout[1]);
-            })
-            .unwrap();
-            match event::read().unwrap() {
-                Event::Key(input) => match input.code {
-                    KeyCode::Char('q') => {
-                        break;
-                    }
-                    KeyCode::Down => {
-                        if self.menu_items_selected >= self.menu_items.len() - 1 {
-                            self.menu_items_selected = 0;
-                        } else {
-                            self.menu_items_selected += 1;
-                        }
-                    }
-                    KeyCode::Up => {
-                        if self.menu_items_selected > 0 {
-                            self.menu_items_selected -= 1;
-                        } else {
-                            self.menu_items_selected = self.menu_items.len() - 1;
-                        }
-                    }
-                    KeyCode::Enter => {
-                        if self.menu_items_selected == 0 {
-                            backup();
-                        }
-                    }
-                    _ => {}
-                },
-                _ => {}
-            }
-        }
+    pub fn dispatch(&mut self) {
+        self.cursive.add_global_callback('q', |s| s.quit());
+        self.cursive.add_global_callback(Key::Esc, |s| s.quit());
+        self.display_main();
+        self.cursive.run();
     }
 }
