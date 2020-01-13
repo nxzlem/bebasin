@@ -12,6 +12,7 @@ extern crate winapi;
 mod app;
 mod hosts;
 mod os;
+mod ui;
 
 use structopt::StructOpt;
 
