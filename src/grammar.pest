@@ -1,0 +1,13 @@
+whitespace = _{ " " | "\t" }
+
+ipv4_chunk = { ('1'..'2') ~ ASCII_DIGIT{2} | ASCII_NONZERO_DIGIT ~ ASCII_DIGIT | ASCII_DIGIT }
+ipv4 = { ipv4_chunk ~ "." ~ ipv4_chunk ~ "." ~ ipv4_chunk ~ "." ~ ipv4_chunk }
+ip = @{ ipv4 }
+
+url_chunk = { (ASCII_ALPHANUMERIC | "-")+ }
+url = @{ url_chunk ~ ("." ~ url_chunk)* }
+urls = { (whitespace+ ~ url)* ~ whitespace* }
+
+comment = _{ "#" ~ (!"\n" ~ ANY)* }
+statement = { ip ~ urls }
+main = _{ SOI ~ "\n"* ~ (statement? ~ comment? ~ "\n"+)* ~ statement? ~ EOI }
