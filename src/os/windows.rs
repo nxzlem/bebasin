@@ -1,3 +1,5 @@
+// https://users.rust-lang.org/t/how-do-i-determine-if-i-have-admin-rights-on-windows/35710/8
+
 // Use std::io::Error::last_os_error for errors.
 // NOTE: For this example I'm simple passing on the OS error.
 // However, customising the error could provide more context
