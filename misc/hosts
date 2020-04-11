@@ -1,6 +1,4 @@
-# ATTENTION, DO NOT EDIT THE HOSTS FILE MANUALLY
-# IF YOU WANT TO EDIT THE HOSTS FILE, PLEASE RESTORE THE HOSTS BEFORE
-# AFTER THAT, YOU CAN MODIFY IT AND REINSTALL BEBASIN
+# ATTENTION, BE CAREFUL WHEN YOU EDIT THIS FILE. DO IT WITH YOUR OWN RISK!
 #
 # # Bebasin
 #
@@ -25,7 +23,6 @@
 # localhost name resolution is handled within DNS itself.
 #	127.0.0.1       localhost
 #	::1             localhost
-
 
 # [REDDIT.COM]
 151.101.129.140 reddit.com
