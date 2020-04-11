@@ -14,9 +14,14 @@ impl App {
         }
     }
 
+    fn set_global_callback(&mut self) {
+        self.cursive.add_global_callback('q', Cursive::quit);
+        self.cursive.add_global_callback(Key::Esc, Cursive::quit);
+    }
+
     pub fn dispatch(&mut self) {
-        self.cursive.add_global_callback('q', |s| s.quit());
-        self.cursive.add_global_callback(Key::Esc, |s| s.quit());
+        self.set_global_callback();
+
         ui::main(&mut self.cursive);
         self.cursive.run();
     }

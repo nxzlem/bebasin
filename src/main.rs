@@ -2,36 +2,28 @@ extern crate async_std;
 extern crate crossterm;
 extern crate cursive;
 extern crate directories;
+#[cfg(not(target_os = "windows"))]
 extern crate nix;
-extern crate structopt;
 extern crate surf;
 extern crate webbrowser;
 #[cfg(target_os = "windows")]
 extern crate winapi;
+extern crate pest;
+#[macro_use]
+extern crate pest_derive;
+#[macro_use]
+extern crate lazy_static;
 
 mod app;
-mod hosts;
+mod updater;
 mod os;
 mod ui;
+mod parser;
 
-use structopt::StructOpt;
-
-// Should be set as a program release file for update
-#[allow(dead_code)]
-const UPDATE_URL: &'static str =
-    "https://raw.githubusercontent.com/gvoze32/bebasid/master/releases/hosts";
-
-#[derive(StructOpt, Debug)]
-#[structopt()]
-struct ArgsOpt {}
+lazy_static! {
+    static ref VERSION: u64 = include_str!("../misc/version").parse().unwrap();
+}
 
 fn main() {
-    let _ = ArgsOpt::from_args();
-
-    // Program should be run using adminstrator access in order to modify hosts file
-    // if os::is_has_admin_access() {
-    //     print!("Requires root access. Try to run it with sudo");
-    //     std::process::exit(0);
-    // }
     app::App::new().dispatch();
 }
