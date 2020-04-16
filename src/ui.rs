@@ -1,6 +1,6 @@
-use crate::updater;
-use crate::os::HOSTS_PATH;
-use crate::parser::{parse_from_file, write_to_file, parse_from_str};
+use crate::{updater, REPOSITORY_URL};
+use crate::os::{HOSTS_PATH, HOSTS_BACKUP_PATH};
+use crate::parser::{parse_from_file, write_to_file, parse_from_str, ErrorKind};
 
 use cursive::traits::*;
 use cursive::views::{
@@ -8,56 +8,12 @@ use cursive::views::{
     TextView,
 };
 use cursive::Cursive;
-use std::collections::HashMap;
 use std::error::Error;
 
-trait AppendableMap<
-    K: std::cmp::Eq + std::hash::Hash,
-    V
-> {
-    fn append(&mut self, other: HashMap<K, Vec<V>>) -> Result<(), ()>;
-}
+use crate::helpers::AppendableMap;
+use crate::updater::{is_backed, backup};
 
-impl<
-    K: std::cmp::Eq + std::hash::Hash,
-    V
-> AppendableMap<K, V> for HashMap<K, Vec<V>> {
-    fn append(&mut self, other: HashMap<K, Vec<V>>) -> Result<(), ()> {
-        for (key, mut value) in other {
-            match self.get_mut(&key) {
-                Some(old_val) => {
-                    old_val.append(&mut value);
-                }
-                None => {
-                    return Err(());
-                }
-            }
-        }
-        Ok(())
-    }
-}
-
-// fn uninstall(s: &mut Cursive) {
-//     if hosts::backup_path().exists() {} else {
-//         s.add_layer(Dialog::info("No hosts backup file found!"));
-//     }
-// }
-
-fn install(cursive: &mut Cursive) {
-    let buttons = LinearLayout::vertical()
-        .child(Button::new("Merge (Recommended)", install_merge))
-        .child(Button::new("Replace", |cursive| {}))
-        .child(DummyView)
-        .child(Button::new("Cancel", |cursive| { cursive.pop_layer(); }));
-    let box_layout = Dialog::around(buttons)
-        .title("Select Installation method");
-
-    cursive.add_layer(
-        box_layout
-    );
-}
-
-fn error(cursive: &mut Cursive, err: Box<dyn std::error::Error>) {
+fn error(cursive: &mut Cursive, err: ErrorKind) {
     cursive.pop_layer();
 
     cursive.add_layer(
@@ -69,7 +25,7 @@ fn error(cursive: &mut Cursive, err: Box<dyn std::error::Error>) {
     );
 }
 
-fn install_merge(cursive: &mut Cursive) {
+fn install(cursive: &mut Cursive) {
     let box_layout = Dialog::text("Parsing the file...")
         .title("Loading...");
 
@@ -77,11 +33,19 @@ fn install_merge(cursive: &mut Cursive) {
         box_layout
     );
 
+    if !is_backed() {
+        let backup_result = backup();
+        if backup_result.is_err() {
+            error(cursive, backup_result.err().unwrap());
+            return;
+        }
+    }
+
     match parse_from_str(include_str!("../misc/hosts")) {
-        Ok(mut hosts_local) => {
-            match parse_from_file("hosts") {
-                Ok(hosts_bebasin) => {
-                    hosts_local.append(hosts_bebasin);
+        Ok(mut hosts_bebasin) => {
+            match parse_from_file(HOSTS_BACKUP_PATH) {
+                Ok(hosts_backup) => {
+                    hosts_bebasin.append(hosts_backup);
                     cursive.pop_layer();
 
                     let box_layout = Dialog::text("Are you sure you want to\n\
@@ -89,13 +53,12 @@ fn install_merge(cursive: &mut Cursive) {
                     Bebasin hosts?")
                         .title("Confirmation")
                         .button("Confirm", move |cursive| {
-                            match write_to_file(HOSTS_PATH, &hosts_local) {
+                            match write_to_file(HOSTS_PATH, &hosts_bebasin, include_str!("../misc/header-hosts")) {
                                 Err(err) => {
                                     cursive.add_layer(
                                         Dialog::text(err.to_string())
                                             .title("Error")
                                             .button("Ok", |cursive| {
-                                                cursive.pop_layer();
                                                 cursive.pop_layer();
                                                 cursive.pop_layer();
                                             })
@@ -107,7 +70,6 @@ fn install_merge(cursive: &mut Cursive) {
                         Please restart your machine")
                                             .title("Done")
                                             .button("Ok", |cursive| {
-                                                cursive.pop_layer();
                                                 cursive.pop_layer();
                                                 cursive.pop_layer();
                                             })
@@ -122,18 +84,18 @@ fn install_merge(cursive: &mut Cursive) {
                     );
                 }
                 Err(err) => {
-                    error(cursive, Box::new(err));
+                    error(cursive, err);
                 }
             };
         }
         Err(err) => {
-            error(cursive, Box::new(err));
+            error(cursive, err);
         }
     };
 }
 
 fn open_repository(cursive: &mut Cursive) {
-    if webbrowser::open("https://github.com/andraantariksa/bebasin").is_err() {
+    if webbrowser::open(REPOSITORY_URL).is_err() {
         let layout = Dialog::text("Can't open any browser")
             .title("Error")
             .button("Ok", |cursive| {
@@ -161,7 +123,7 @@ pub fn main(cursive: &mut Cursive) {
             .child(text_header)
             .child(DummyView)
             .child(menu_buttons),
-        )
+    )
         .title("Menu");
 
     cursive.add_layer(

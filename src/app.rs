@@ -1,5 +1,4 @@
 use crate::ui;
-
 use cursive::event::Key;
 use cursive::Cursive;
 

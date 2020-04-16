@@ -2,8 +2,26 @@ use std::fs;
 use pest::Parser;
 use pest::error::Error;
 use std::io::prelude::*;
-use std::io;
 use std::collections::HashMap;
+use std::collections::hash_map::RandomState;
+
+pub enum ErrorKind {
+    Error(Box<dyn std::error::Error>),
+    IOError(std::io::Error),
+    PestRuleError(pest::error::Error<Rule>),
+    SurfException(surf::Exception)
+}
+
+impl ErrorKind {
+    pub fn to_string(&self) -> String {
+        match self {
+            ErrorKind::Error(err) => err.to_string(),
+            ErrorKind::IOError(err) => err.to_string(),
+            ErrorKind::PestRuleError(err) => err.to_string(),
+            ErrorKind::SurfException(err) => err.to_string()
+        }
+    }
+}
 
 type Hosts = HashMap<String, Vec<String>>;
 
@@ -11,18 +29,19 @@ type Hosts = HashMap<String, Vec<String>>;
 #[grammar = "grammar.pest"]
 struct HostsParser;
 
-pub fn write_to_file(file_path: &str, hosts: &Hosts) -> io::Result<()> {
+pub fn write_to_file(file_path: &str, hosts: &Hosts, header: &str) -> Result<(), ErrorKind> {
     let mut file;
     match fs::File::create(file_path) {
         Ok(f) => {
             file = f;
         }
         Err(err) => {
-            return Err(err);
+            return Err(ErrorKind::IOError(err));
         }
     };
 
-    let mut hosts_stringify = String::from(include_str!("../misc/header"));
+    let mut hosts_stringify = String::new();
+    hosts_stringify.push_str(header);
     for host in hosts {
         let ip = &host.0;
         let hostnames = &host.1.join(" ");
@@ -30,21 +49,25 @@ pub fn write_to_file(file_path: &str, hosts: &Hosts) -> io::Result<()> {
         hosts_stringify.push_str(&format!("{} {}\n", ip, hostnames));
     }
 
-    file.write_all(hosts_stringify.as_bytes().as_ref())
+    match file.write_all(hosts_stringify.as_bytes().as_ref()) {
+        Ok(()) => Ok(()),
+        Err(err) => Err(ErrorKind::IOError(err))
+    }
 }
 
-pub fn parse_from_file(file_path: &str) -> Result<Hosts, Error<Rule>> {
-    let str = fs::read_to_string(file_path)
-        .expect("Something went wrong reading the file");
-    parse_from_str(&str)
+pub fn parse_from_file(file_path: &str) -> Result<Hosts, ErrorKind> {
+    match fs::read_to_string(file_path) {
+        Ok(str) => parse_from_str(&str),
+        Err(err) => Err(ErrorKind::IOError(err))
+    }
 }
 
-pub fn parse_from_str(str: &str) -> Result<Hosts, Error<Rule>> {
+pub fn parse_from_str(str: &str) -> Result<Hosts, ErrorKind> {
     let mut hosts: Hosts = HashMap::new();
     let res = HostsParser::parse(Rule::main, str);
 
     if let Err(err) = res {
-        return Err(err);
+        return Err(ErrorKind::PestRuleError(err));
     }
 
     for pairs in res {
