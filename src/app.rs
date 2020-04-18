@@ -1,8 +1,7 @@
-use crate::{ui, LATEST_VERSION_URL};
+use crate::ui;
 use cursive::event::Key;
 use cursive::Cursive;
 use serde::Deserialize;
-use crate::parser::ErrorKind;
 
 #[derive(Deserialize)]
 struct Checksum {

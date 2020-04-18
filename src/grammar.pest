@@ -26,4 +26,4 @@ hostnames = { (whitespace+ ~ hostname)* ~ whitespace* }
 
 comment = _{ "#" ~ (!"\n" ~ ANY)* }
 statement = { ip ~ hostnames }
-main = _{ SOI ~ "\n"* ~ (statement? ~ comment? ~ "\n"+)* ~ statement? ~ EOI }
+main = _{ SOI ~ "\n"* ~ (statement? ~ comment? ~ ("\r"? ~ "\n")+)* ~ statement? ~ EOI }

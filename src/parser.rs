@@ -1,18 +1,17 @@
-use std::fs;
 use pest::Parser;
+use std::collections::HashMap;
+use std::fs;
 use std::io::prelude::*;
-use std::collections::{HashMap, HashSet};
 
 #[derive(Debug)]
 pub enum ErrorKind {
     Error(Box<dyn std::error::Error>),
     IOError(std::io::Error),
     PestRuleError(pest::error::Error<Rule>),
-    SurfException(surf::Exception),
     SerdeJSONError(serde_json::Error),
     #[cfg(target_os = "linux")]
     NixError(nix::Error),
-    String(String)
+    String(String),
 }
 
 impl ErrorKind {
@@ -23,9 +22,8 @@ impl ErrorKind {
             ErrorKind::PestRuleError(err) => err.to_string(),
             #[cfg(target_os = "linux")]
             ErrorKind::NixError(err) => err.to_string(),
-            ErrorKind::SurfException(err) => err.to_string(),
             ErrorKind::SerdeJSONError(err) => err.to_string(),
-            ErrorKind::String(err) => err.to_owned()
+            ErrorKind::String(err) => err.to_owned(),
         }
     }
 }
@@ -60,14 +58,14 @@ pub fn write_to_file(file_path: &str, hosts: &Hosts, header: &str) -> Result<(),
 
     match file.write_all(hosts_stringify.as_bytes().as_ref()) {
         Ok(()) => Ok(()),
-        Err(err) => Err(ErrorKind::IOError(err))
+        Err(err) => Err(ErrorKind::IOError(err)),
     }
 }
 
 pub fn parse_from_file(file_path: &str) -> Result<Hosts, ErrorKind> {
     match fs::read_to_string(file_path) {
         Ok(str) => parse_from_str(&str),
-        Err(err) => Err(ErrorKind::IOError(err))
+        Err(err) => Err(ErrorKind::IOError(err)),
     }
 }
 
@@ -90,12 +88,12 @@ pub fn parse_from_str(str: &str) -> Result<Hosts, ErrorKind> {
                         match inner_pair.as_rule() {
                             Rule::ip => {
                                 ip = inner_pair.as_str().to_owned();
-                            },
+                            }
                             Rule::hostnames => {
                                 for hostname in inner_pair.into_inner() {
                                     hostnames.push(hostname.as_str().to_owned());
                                 }
-                            },
+                            }
                             _ => {}
                         }
                     }
@@ -103,12 +101,12 @@ pub fn parse_from_str(str: &str) -> Result<Hosts, ErrorKind> {
                     match hosts.get_mut(&ip) {
                         Some(old_val) => {
                             old_val.append(&mut hostnames);
-                        },
+                        }
                         None => {
                             hosts.insert(ip, hostnames);
                         }
                     };
-                },
+                }
                 _ => {}
             }
         }

@@ -1,8 +1,7 @@
-use crate::{updater, REPOSITORY_URL, HOSTS_HEADER, HOSTS_BEBASIN};
-use crate::os::{HOSTS_PATH, HOSTS_BACKUP_PATH};
-use crate::parser::{parse_from_file, write_to_file, parse_from_str, ErrorKind};
+use crate::os::{HOSTS_BACKUP_PATH, HOSTS_PATH};
+use crate::parser::{parse_from_file, parse_from_str, write_to_file, ErrorKind};
+use crate::{updater, HOSTS_BEBASIN, HOSTS_HEADER, REPOSITORY_URL};
 
-use cursive::traits::*;
 use cursive::views::{
     Button, Checkbox, Dialog, DummyView, EditView, Layer, LinearLayout, ListView, SelectView,
     TextView,
@@ -10,7 +9,7 @@ use cursive::views::{
 use cursive::Cursive;
 
 use crate::helpers::AppendableMap;
-use crate::updater::{is_backed, backup};
+use crate::updater::{backup, is_backed};
 
 fn error(cursive: &mut Cursive, err: ErrorKind) {
     cursive.pop_layer();
@@ -20,17 +19,14 @@ fn error(cursive: &mut Cursive, err: ErrorKind) {
             .button("Ok", |cursive| {
                 cursive.pop_layer();
             })
-            .title("Error")
+            .title("Error"),
     );
 }
 
 fn install(cursive: &mut Cursive) {
-    let box_layout = Dialog::text("Parsing the file...")
-        .title("Loading...");
+    let box_layout = Dialog::text("Parsing the file...").title("Loading...");
 
-    cursive.add_layer(
-        box_layout
-    );
+    cursive.add_layer(box_layout);
 
     if !is_backed() {
         let backup_result = backup();
@@ -47,40 +43,45 @@ fn install(cursive: &mut Cursive) {
                     hosts_bebasin.append(hosts_backup);
                     cursive.pop_layer();
 
-                    let box_layout = Dialog::text("Are you sure you want to\n\
+                    let box_layout = Dialog::text(
+                        "Are you sure you want to\n\
                     merge your hosts file with\n\
-                    Bebasin hosts?")
-                        .title("Confirmation")
-                        .button("Confirm", move |cursive| {
-                            match write_to_file(HOSTS_PATH, &hosts_bebasin, HOSTS_HEADER) {
-                                Err(err) => {
-                                    cursive.add_layer(
-                                        Dialog::text(err.to_string())
-                                            .title("Error")
-                                            .button("Ok", |cursive| {
-                                                cursive.pop_layer();
-                                                cursive.pop_layer();
-                                            })
-                                    );
-                                }
-                                _ => {
-                                    cursive.add_layer(
-                                        Dialog::text("The hosts file has been updated,\n\
-                        Please restart your machine")
-                                            .title("Done")
-                                            .button("Ok", |cursive| {
-                                                cursive.pop_layer();
-                                                cursive.pop_layer();
-                                            })
-                                    );
-                                }
-                            };
-                        })
-                        .button("Cancel", |cursive| { cursive.pop_layer(); });
+                    Bebasin hosts?",
+                    )
+                    .title("Confirmation")
+                    .button("Confirm", move |cursive| {
+                        match write_to_file(HOSTS_PATH, &hosts_bebasin, HOSTS_HEADER) {
+                            Err(err) => {
+                                cursive.add_layer(
+                                    Dialog::text(err.to_string()).title("Error").button(
+                                        "Ok",
+                                        |cursive| {
+                                            cursive.pop_layer();
+                                            cursive.pop_layer();
+                                        },
+                                    ),
+                                );
+                            }
+                            _ => {
+                                cursive.add_layer(
+                                    Dialog::text(
+                                        "The hosts file has been updated,\n\
+                        Please restart your machine",
+                                    )
+                                    .title("Done")
+                                    .button("Ok", |cursive| {
+                                        cursive.pop_layer();
+                                        cursive.pop_layer();
+                                    }),
+                                );
+                            }
+                        };
+                    })
+                    .button("Cancel", |cursive| {
+                        cursive.pop_layer();
+                    });
 
-                    cursive.add_layer(
-                        box_layout
-                    );
+                    cursive.add_layer(box_layout);
                 }
                 Err(err) => {
                     error(cursive, err);
@@ -101,19 +102,66 @@ fn open_repository(cursive: &mut Cursive) {
                 cursive.pop_layer();
             });
 
-        cursive.add_layer(
-            layout
-        );
+        cursive.add_layer(layout);
     }
 }
 
+fn update(cursive: &mut Cursive) {
+    let mut updater_instance = updater::Updater::new();
+
+    let loading_layer =
+        Dialog::text("Retrieving latest application information").title("Loading...");
+    cursive.add_layer(loading_layer);
+
+    let latest = match updater_instance.get_latest_info() {
+        Ok(latest) => latest,
+        Err(err) => {
+            return {
+                error(cursive, err);
+            }
+        }
+    };
+
+    cursive.pop_layer();
+
+    if !updater_instance.is_updatable() {
+        let warning_layer = Dialog::text("You have been using the latest update application")
+            .button("Ok", |cursive| { cursive.pop_layer(); })
+            .title("Warning");
+        cursive.add_layer(warning_layer);
+        return;
+    }
+
+    let confirmation_layer = Dialog::text(format!(
+        "Are you sure you want to update to version {}?",
+        latest.version
+    ))
+    .title("Confirmation")
+    .button("No", |cursive| {
+        cursive.pop_layer();
+    })
+    .button("Yes",  move|cursive| match updater_instance.update() {
+        Ok(_) => {
+            let updated_layer =
+                Dialog::text("The application has been updated, please re-run the application")
+                    .button("Ok", |cursive| {
+                        cursive.quit();
+                    });
+            cursive.add_layer(updated_layer);
+        }
+        Err(err) => return { error(cursive, err) },
+    });
+    cursive.add_layer(confirmation_layer);
+}
+
 pub fn main(cursive: &mut Cursive) {
-    let text_header =
-        TextView::new("If you found any issue or you have a request,\n\
-           please create a new issue on the repository");
+    let text_header = TextView::new(
+        "If you found any issue or you have a request,\n\
+           please create a new issue on the repository",
+    );
     let menu_buttons = LinearLayout::vertical()
         .child(Button::new("Install", install))
-        .child(Button::new("Update", |_| {}))
+        .child(Button::new("Update", update))
         .child(Button::new("Repository", open_repository))
         .child(DummyView)
         .child(Button::new("Quit", Cursive::quit));
@@ -123,9 +171,7 @@ pub fn main(cursive: &mut Cursive) {
             .child(DummyView)
             .child(menu_buttons),
     )
-        .title("Menu");
+    .title("Menu");
 
-    cursive.add_layer(
-        layout
-    );
+    cursive.add_layer(layout);
 }
