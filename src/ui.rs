@@ -1,4 +1,4 @@
-use crate::{updater, REPOSITORY_URL};
+use crate::{updater, REPOSITORY_URL, HOSTS_HEADER, HOSTS_BEBASIN};
 use crate::os::{HOSTS_PATH, HOSTS_BACKUP_PATH};
 use crate::parser::{parse_from_file, write_to_file, parse_from_str, ErrorKind};
 
@@ -8,7 +8,6 @@ use cursive::views::{
     TextView,
 };
 use cursive::Cursive;
-use std::error::Error;
 
 use crate::helpers::AppendableMap;
 use crate::updater::{is_backed, backup};
@@ -41,7 +40,7 @@ fn install(cursive: &mut Cursive) {
         }
     }
 
-    match parse_from_str(include_str!("../misc/hosts")) {
+    match parse_from_str(HOSTS_BEBASIN) {
         Ok(mut hosts_bebasin) => {
             match parse_from_file(HOSTS_BACKUP_PATH) {
                 Ok(hosts_backup) => {
@@ -53,7 +52,7 @@ fn install(cursive: &mut Cursive) {
                     Bebasin hosts?")
                         .title("Confirmation")
                         .button("Confirm", move |cursive| {
-                            match write_to_file(HOSTS_PATH, &hosts_bebasin, include_str!("../misc/header-hosts")) {
+                            match write_to_file(HOSTS_PATH, &hosts_bebasin, HOSTS_HEADER) {
                                 Err(err) => {
                                     cursive.add_layer(
                                         Dialog::text(err.to_string())

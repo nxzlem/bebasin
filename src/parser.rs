@@ -1,15 +1,18 @@
 use std::fs;
 use pest::Parser;
-use pest::error::Error;
 use std::io::prelude::*;
-use std::collections::HashMap;
-use std::collections::hash_map::RandomState;
+use std::collections::{HashMap, HashSet};
 
+#[derive(Debug)]
 pub enum ErrorKind {
     Error(Box<dyn std::error::Error>),
     IOError(std::io::Error),
     PestRuleError(pest::error::Error<Rule>),
-    SurfException(surf::Exception)
+    SurfException(surf::Exception),
+    SerdeJSONError(serde_json::Error),
+    #[cfg(target_os = "linux")]
+    NixError(nix::Error),
+    String(String)
 }
 
 impl ErrorKind {
@@ -18,11 +21,17 @@ impl ErrorKind {
             ErrorKind::Error(err) => err.to_string(),
             ErrorKind::IOError(err) => err.to_string(),
             ErrorKind::PestRuleError(err) => err.to_string(),
-            ErrorKind::SurfException(err) => err.to_string()
+            #[cfg(target_os = "linux")]
+            ErrorKind::NixError(err) => err.to_string(),
+            ErrorKind::SurfException(err) => err.to_string(),
+            ErrorKind::SerdeJSONError(err) => err.to_string(),
+            ErrorKind::String(err) => err.to_owned()
         }
     }
 }
 
+// TODO
+// Migrate to HashSet to remove duplication (?)
 type Hosts = HashMap<String, Vec<String>>;
 
 #[derive(Parser)]

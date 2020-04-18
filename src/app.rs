@@ -1,6 +1,20 @@
-use crate::ui;
+use crate::{ui, LATEST_VERSION_URL};
 use cursive::event::Key;
 use cursive::Cursive;
+use serde::Deserialize;
+use crate::parser::ErrorKind;
+
+#[derive(Deserialize)]
+struct Checksum {
+    linux: String,
+    windows: String,
+}
+
+#[derive(Deserialize)]
+struct Latest {
+    version: u64,
+    checksum: Checksum,
+}
 
 pub struct App {
     cursive: Cursive,

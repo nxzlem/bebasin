@@ -10,6 +10,7 @@ use std::path::Path;
 use crate::parser::{parse_from_file, write_to_file, ErrorKind};
 use serde::{Serialize, Deserialize};
 use std::sync::{Arc, Mutex};
+use crate::parser::ErrorKind::Error;
 
 pub fn is_backed() -> bool {
     Path::new(HOSTS_BACKUP_PATH).exists()
@@ -25,124 +26,207 @@ pub fn backup() -> Result<(), ErrorKind> {
     }
 }
 
-pub fn get_latest_version() -> Result<u64, String> {
-    task::block_on(async {
-        match surf::get(LATEST_VERSION_URL)
-            .recv_string()
-            .await {
-            Ok(str) => match str.parse::<u64>() {
-                Ok(num) => Ok(num),
-                Err(err) => Err(err.to_string()),
-            },
-            Err(err) => Err(err.to_string())
-        }
-    })
+#[derive(Deserialize)]
+pub struct Checksum {
+    linux: String,
+    windows: String,
 }
 
-pub fn is_updatable() -> Result<bool, String> {
-    match get_latest_version() {
-        Ok(version_latest) => Ok(version_latest > CURRENT_VERSION),
-        Err(err) => Err(err)
-    }
+#[derive(Deserialize)]
+pub struct Latest {
+    version: u64,
+    checksum: Checksum,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Deserialize)]
 struct ReleaseAssets {
     name: String,
     size: u32,
-    browser_download_url: String
+    browser_download_url: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Deserialize)]
 struct Release {
     assets: Vec<ReleaseAssets>
 }
 
-fn md5_digest<R: std::io::Read>(mut reader: R) -> Result<md5::Digest, ()> {
+fn md5_digest<R: std::io::Read>(mut reader: R) -> Result<md5::Digest, std::io::Error> {
     let mut context = md5::Context::new();
     let mut buffer = [0; 1024];
 
     loop {
-        let count = reader.read(&mut buffer).unwrap();
-        if count == 0 {
-            break;
-        }
+        let count = match reader.read(&mut buffer) {
+            Ok(size) => if size == 0 {
+                break;
+            } else {
+                size
+            },
+            Err(err) => return Err(err)
+        };
         context.consume(&buffer[..count]);
     }
 
     Ok(context.compute())
 }
 
-fn get_md5_digest() {
-    let file = std::fs::File::open("test").unwrap();
-    let digest = md5_digest(file);
-    println!("Digest {:?}", digest);
+fn get_md5_digest<P: AsRef<Path>>(path: &P) -> Result<md5::Digest, ErrorKind> {
+    match std::fs::File::open(path) {
+        Ok(file) => match md5_digest(file) {
+            Ok(x) => Ok(x),
+            Err(err) => Err(ErrorKind::IOError(err))
+        }
+        Err(err) => Err(ErrorKind::IOError(err))
+    }
 }
 
-pub fn update() -> Result<(), ErrorKind> {
-    task::block_on(async {
-        match surf::get("https://api.github.com/repos/andraantariksa/anime4k-rs/releases/latest")
-            .recv_json::<Release>()
-            .await {
-            Ok(data) => {
-                if cfg!(target_os = "windows") {
+#[cfg(target_os = "linux")]
+fn set_as_executable<P: AsRef<Path> + nix::NixPath>(path: &P) -> Result<(), ErrorKind> {
+    use std::os::unix::io::IntoRawFd as _;
 
-                } else {
-                    for asset in data.assets {
-                        if !asset.name.contains(".exe") {
-                            // let redir = surf::get(asset.browser_download_url).recv_string().await.unwrap();
-                            // let url = redir.split('"').collect::<Vec<&str>>()[1];
-                            let mut binary = Arc::new(Mutex::new(Vec::new()));
-                            let mut curli = curl::easy::Easy::new();
-                            curli.url(&asset.browser_download_url).unwrap();
-                            // curli.cookie_file("cookie").unwrap();
-                            // curli.cookie_session(true).unwrap();
-                            curli.follow_location(true).unwrap();
-                            {
-                                let mut handler = curli.transfer();
-                                handler.write_function(|data| {
-                                    binary.lock().unwrap().extend_from_slice(data);
-                                    Ok(data.len())
-                                }).unwrap();
-                                handler.perform().unwrap();
-                            }
-                            // let binary = surf::get(url).recv_bytes().await.unwrap();
-                            let file_path_update = "test";
-                            let mut file_created = fs::File::create(file_path_update).unwrap();
-                            file_created.write(binary.lock().unwrap().as_slice());
+    // Get file permission
+    let permission = match nix::sys::stat::stat(path) {
+        Ok(stat) => stat.st_mode,
+        Err(err) => return Err(ErrorKind::NixError(err))
+    };
+    let mut permission_mode = nix::sys::stat::Mode::from_bits_truncate(permission);
+    // Add user executable permission
+    permission_mode.insert(nix::sys::stat::Mode::S_IRWXU);
 
-                            let exe_name = &std::env::current_exe().unwrap();
+    // Set the file permission
+    let file_descriptor = match std::fs::File::open(path) {
+        Ok(file) => file.into_raw_fd(),
+        Err(err) => return Err(ErrorKind::IOError(err))
+    };
+    match nix::sys::stat::fchmod(file_descriptor, permission_mode) {
+        Ok(_) => Ok(()),
+        Err(err) => Err(ErrorKind::NixError(err))
+    }
+}
 
-                            let permission = nix::sys::stat::stat(file_path_update).unwrap().st_mode;
-                            let mut permission_mode: nix::sys::stat::Mode = nix::sys::stat::Mode::from_bits_truncate(permission);
-                            permission_mode.insert(nix::sys::stat::Mode::S_IRWXU);
+pub struct Updater {
+    pub latest: Option<Latest>
+}
 
-                            nix::unistd::unlink(exe_name);
-
-                            use std::os::unix::io::IntoRawFd;
-                            let f_fd = std::fs::File::open(file_path_update).unwrap().into_raw_fd();
-                            nix::sys::stat::fchmod(f_fd, permission_mode);
-
-                            get_md5_digest();
-                        }
-                    }
-                }
-                // let current_file_path =
-                //     std::env::current_exe().expect("Error when retrieving current file path");
-                // let mut temp_file_path =
-                //     std::env::current_exe().expect("Error when retrieving current file path");
-                // temp_file_path.set_extension("tmp");
-                // let current_file_dir_path =
-                //     std::env::current_dir().expect("Error when retrieving current file direcotry path");
-                //
-                // fs::rename(current_file_path, temp_file_path).unwrap();
-                //
-                // fs::File::create("bebasin.tmp").expect("Error when creating temprorary file");
-                // fs::write("bebasin.tmp", file_content)
-                //     .expect("Error when writing to the hosts temprorary file");
-                Ok(())
-            },
-            Err(err) => Err(ErrorKind::SurfException(err))
+impl Updater {
+    pub fn new() -> Updater {
+        Updater {
+            latest: None,
         }
-    })
+    }
+
+    pub fn get_latest_info(&mut self) -> Result<(), ErrorKind> {
+        let mut byte_data = Vec::new();
+        let mut curl_instance = curl::easy::Easy::new();
+        curl_instance.url(LATEST_VERSION_URL).unwrap();
+        {
+            let mut handler = curl_instance.transfer();
+            handler.write_function(|data| {
+                byte_data.extend_from_slice(data);
+                Ok(data.len())
+            }).unwrap();
+            handler.perform().unwrap();
+        }
+        let string_data = String::from_utf8_lossy(&byte_data);
+
+        self.latest = match serde_json::from_str::<Latest>(&string_data) {
+            Ok(latest_data) => Some(latest_data),
+            Err(err) => return Err(ErrorKind::SerdeJSONError(err))
+        };
+
+        Ok(())
+    }
+
+    pub fn is_updatable(&self) -> bool {
+        // Bruh unsafe
+        let latest = &self.latest.as_ref().unwrap();
+
+        CURRENT_VERSION < latest.version
+    }
+
+    pub fn update(&self) -> Result<(), ErrorKind> {
+        // Bruh unsafe
+        let latest = &self.latest.as_ref().unwrap();
+
+        let mut byte_data = Vec::new();
+        let mut curl_instance = curl::easy::Easy::new();
+        curl_instance.url(UPDATE_URL).unwrap();
+        curl_instance.useragent("User-Agent: Awesome-Octocat-App").unwrap();
+        {
+            let mut handler = curl_instance.transfer();
+            handler.write_function(|data| {
+                byte_data.extend_from_slice(data);
+                Ok(data.len())
+            }).unwrap();
+            handler.perform().unwrap();
+        }
+        let string_data = String::from_utf8_lossy(&byte_data);
+        let release_data = match serde_json::from_str::<Release>(&string_data) {
+            Ok(release_data) => release_data,
+            Err(err) => return Err(ErrorKind::SerdeJSONError(err))
+        };
+        println!("1");
+
+        if cfg!(target_os = "windows") {} else {
+            for asset in release_data.assets {
+                println!("2");
+                if !asset.name.contains(".exe") {
+                    println!("3");
+                    let mut byte_data = Vec::new();
+                    let mut curl_instance = curl::easy::Easy::new();
+                    println!("{}", asset.browser_download_url);
+                    curl_instance.url(&asset.browser_download_url).unwrap();
+                    curl_instance.follow_location(true).unwrap();
+                    curl_instance.cookie_file("cookie").unwrap();
+                    curl_instance.cookie_session(true).unwrap();
+                    {
+                        println!("Running");
+                        let mut handler = curl_instance.transfer();
+                        handler.write_function(|data| {
+                            println!("Writing");
+                            byte_data.extend_from_slice(data);
+                            Ok(data.len())
+                        }).unwrap();
+                        println!("Performing");
+                        handler.perform().unwrap();
+                    }
+
+                    println!("4");
+
+                    let mut updated_exe_path = std::env::current_exe().unwrap();
+                    updated_exe_path.pop();
+                    updated_exe_path.push(".bebasin_tmp");
+                    // Bruh unsafe
+                    let current_exe_path = &std::env::current_exe().unwrap();
+
+                    {
+                        let mut file_created = fs::File::create(&updated_exe_path).unwrap();
+                        file_created.write(byte_data.as_slice());
+                    }
+
+                    println!("{:?} == {:?}", format!("{:x}", get_md5_digest(&updated_exe_path).unwrap()), latest.checksum.linux);
+
+                    match get_md5_digest(&updated_exe_path) {
+                        Ok(digest) => if format!("{:x}", digest) != latest.checksum.linux {
+                                return Err(ErrorKind::String(String::from("Download corrupt")));
+                        }
+                        Err(err) => return Err(err)
+                    };
+
+                    if let Err(err) = set_as_executable(&updated_exe_path) {
+                        return Err(err);
+                    }
+
+                    if let Err(err) = nix::unistd::unlink(current_exe_path) {
+                        return Err(ErrorKind::NixError(err));
+                    }
+
+                    match fs::rename(&updated_exe_path, current_exe_path) {
+                        Err(err) => return Err(ErrorKind::IOError(err)),
+                        _ => ()
+                    };
+                }
+            }
+        }
+        Ok(())
+    }
 }
