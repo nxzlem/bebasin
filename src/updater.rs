@@ -241,7 +241,7 @@ impl Updater {
     }
 
     #[cfg(not(target_os = "windows"))]
-    fn process_update(release: Release) -> Result<(), ErrorKind> {
+    fn process_update(&self, release: Release) -> Result<(), ErrorKind> {
         // Bruh unsafe
         let latest = &self.latest.as_ref().unwrap();
 
