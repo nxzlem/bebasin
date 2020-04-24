@@ -17,11 +17,11 @@ mod ui;
 mod updater;
 
 const CURRENT_VERSION: u64 = 20200417;
-const REPOSITORY_URL: &'static str = "https://github.com/andraantariksa/bebasin";
+const REPOSITORY_URL: &'static str = "https://github.com/bebasid/bebasin";
 const LATEST_VERSION_URL: &'static str =
-    "https://raw.githubusercontent.com/andraantariksa/bebasin/master/latest.json";
+    "https://raw.githubusercontent.com/bebasid/bebasin/master/latest.json";
 const UPDATE_URL: &'static str =
-    "https://api.github.com/repos/andraantariksa/bebasin/releases/latest";
+    "https://api.github.com/repos/bebasid/bebasin/releases/latest";
 const HOSTS_HEADER: &'static str = include_str!("../misc/header-hosts");
 const HOSTS_BEBASIN: &'static str = include_str!("../misc/hosts");
 
