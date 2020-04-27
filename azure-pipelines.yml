@@ -58,16 +58,24 @@ stages:
             echo "##vso[task.setvariable variable=build.my_tag]$MY_TAG"
             DATE="$(date +%Y-%m-%d)"
             echo "##vso[task.setvariable variable=build.date]$DATE"
+            
+            mkdir $(Pipeline.Workspace)/release
+
+            unzip $(Pipeline.Workspace)/target/bebasin\ -\ x86_64-pc-windows-msvc.zip -d $(Pipeline.Workspace)/target/windows
+            mv $(Pipeline.Workspace)/target/windows/b/x86_64-pc-windows-msvc/release/bebasin.exe $(Pipeline.Workspace)/release/bebasin.exe
+
+            unzip $(Pipeline.Workspace)/target/bebasin\ -\ x86_64-unknown-linux-gnu.zip -d $(Pipeline.Workspace)/target/linux
+            mv $(Pipeline.Workspace)/target/linux/b/x86_64-unknown-linux-gnu/release/bebasin $(Pipeline.Workspace)/release/bebasin
           displayName: "Create date and tag variables"
         - task: GitHubRelease@0
           displayName: "GithubRelease@0 '$(build.my_tag) - $(build.date)'"
           inputs:
               gitHubConnection: andraantariksa_accesstoken
               tagSource: manual
-              title: '$(build.my_tag) - $(build.date)'
+              title: Latest
               tag: '$(build.my_tag)'
               assetUploadMode: replace
               action: edit
-              assets: "$(Pipeline.Workspace)/target/*"
+              assets: "$(Pipeline.Workspace)/release/*"
               repositoryName: "$(Build.Repository.Name)"
               isPreRelease: false
