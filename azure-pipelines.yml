@@ -1,3 +1,10 @@
+trigger:
+  branches:
+    include:
+      - master
+  paths:
+    exclude:
+      - latest.json
 resources:
   repositories:
     - repository: rust_pipelines
@@ -66,7 +73,30 @@ stages:
 
             unzip $(Pipeline.Workspace)/target/bebasin\ -\ x86_64-unknown-linux-gnu.zip -d $(Pipeline.Workspace)/target/linux
             mv $(Pipeline.Workspace)/target/linux/b/x86_64-unknown-linux-gnu/release/bebasin $(Pipeline.Workspace)/release/bebasin
-          displayName: "Create date and tag variables"
+          displayName: "Unzip files, create date and tag variables"
+        - bash: |
+            MD5SUM_WINDOWS="$(md5sum $(Pipeline.Workspace)/release/bebasin.exe | cut -d" " -f1)"
+            MD5SUM_LINUX="$(md5sum $(Pipeline.Workspace)/release/bebasin | cut -d" " -f1)"
+            VERSION="$(date +%Y%m%d)"
+            LAST_COMMIT_MESSAGE="$(git log -1 --pretty=%B)"
+            LATEST_JSON="$(node -e "console.log(JSON.stringify({version: $VERSION, checksum: {linux: \"$MD5SUM_LINUX\", windows: \"$MD5SUM_WINDOWS\"}}))")"
+
+            git config --global user.email "andra.antariksa@gmail.com"
+            git config --global user.name "Andra Antariksa"
+
+            # Push if there's any difference
+            # Every compilation will resulting in different checksum!
+            git clone https://andraantariksa:$(ACCESS_TOKEN)@github.com/bebasid/bebasin.git ../bebasin
+            if ! cmp ../bebasin/latest.json latest.json >/dev/null 2>&1
+            then
+              cd ../bebasin
+              git remote set-url origin https://andraantariksa:$(ACCESS_TOKEN)@github.com/bebasid/bebasin.git
+              echo $LATEST_JSON > latest.json
+              git add latest.json
+              git commit -m "Renew md5sum of latest release: " -m "$LAST_COMMIT_MESSAGE"
+              git push origin master
+            fi
+          displayName: "Update md5sum"
         - task: GitHubRelease@0
           displayName: "GithubRelease@0 '$(build.my_tag) - $(build.date)'"
           inputs:
