@@ -87,15 +87,15 @@ stages:
             # Push if there's any difference
             # Every compilation will resulting in different checksum!
             git clone https://andraantariksa:$(ACCESS_TOKEN)@github.com/bebasid/bebasin.git ../bebasin
-            if ! cmp ../bebasin/latest.json latest.json >/dev/null 2>&1
-            then
+            #if ! cmp ../bebasin/latest.json latest.json >/dev/null 2>&1
+            #then
               cd ../bebasin
               git remote set-url origin https://andraantariksa:$(ACCESS_TOKEN)@github.com/bebasid/bebasin.git
               echo $LATEST_JSON > latest.json
               git add latest.json
               git commit -m "Renew md5sum of latest release: " -m "$LAST_COMMIT_MESSAGE"
               git push origin master
-            fi
+            #fi
           displayName: "Update md5sum"
         - task: GitHubRelease@0
           displayName: "GithubRelease@0 '$(build.my_tag) - $(build.date)'"
