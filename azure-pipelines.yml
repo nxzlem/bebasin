@@ -27,6 +27,8 @@ stages:
               vmImage: ubuntu-16.04
             Windows:
               vmImage: vs2017-win2016
+            MacOS:
+              vmImage: macOS-10.15
 
   - stage: build
     displayName: "Builds"
@@ -44,6 +46,9 @@ stages:
           pre-steps: []
         - target: x86_64-pc-windows-msvc
           name: x86_64_pc_windows_msvc
+          pre-steps: []
+        - target: x86_64-apple-darwin
+          name: x86_64_apple_darwin
           pre-steps: []
 
   - stage: release
@@ -69,17 +74,21 @@ stages:
             mkdir $(Pipeline.Workspace)/release
 
             unzip $(Pipeline.Workspace)/target/bebasin\ -\ x86_64-pc-windows-msvc.zip -d $(Pipeline.Workspace)/target/windows
-            mv $(Pipeline.Workspace)/target/windows/b/x86_64-pc-windows-msvc/release/bebasin.exe $(Pipeline.Workspace)/release/bebasin.exe
+            zip $(Pipeline.Workspace)/release/bebasin\ -\ x86_64-pc-windows-msvc.zip $(Pipeline.Workspace)/target/windows/b/x86_64-pc-windows-msvc/release/bebasin.exe
 
             unzip $(Pipeline.Workspace)/target/bebasin\ -\ x86_64-unknown-linux-gnu.zip -d $(Pipeline.Workspace)/target/linux
-            mv $(Pipeline.Workspace)/target/linux/b/x86_64-unknown-linux-gnu/release/bebasin $(Pipeline.Workspace)/release/bebasin
+            zip $(Pipeline.Workspace)/release/bebasin\ -\ x86_64-unknown-linux-gnu.zip $(Pipeline.Workspace)/target/linux/b/x86_64-unknown-linux-gnu/release/bebasin
+
+            unzip $(Pipeline.Workspace)/target/bebasin\ -\ x86_64-apple-darwin.zip -d $(Pipeline.Workspace)/target/macos
+            zip $(Pipeline.Workspace)/release/bebasin\ -\ x86_64-apple-darwin.zip $(Pipeline.Workspace)/target/macos/b/x86_64-apple-darwin/release/bebasin
           displayName: "Unzip files, create date and tag variables"
         - bash: |
-            MD5SUM_WINDOWS="$(md5sum $(Pipeline.Workspace)/release/bebasin.exe | cut -d" " -f1)"
-            MD5SUM_LINUX="$(md5sum $(Pipeline.Workspace)/release/bebasin | cut -d" " -f1)"
+            MD5SUM_WINDOWS="$(md5sum $(Pipeline.Workspace)/release/bebasin\ -\ x86_64-pc-windows-msvc.zip | cut -d" " -f1)"
+            MD5SUM_LINUX="$(md5sum $(Pipeline.Workspace)/release/bebasin\ -\ x86_64-unknown-linux-gnu.zip | cut -d" " -f1)"
+            MD5SUM_MACOS="$(md5sum $(Pipeline.Workspace)/release/bebasin\ -\ x86_64-apple-darwin.zip | cut -d" " -f1)"
             VERSION="$(date +%Y%m%d)"
             LAST_COMMIT_MESSAGE="$(git log -1 --pretty=%B)"
-            LATEST_JSON="$(node -e "console.log(JSON.stringify({version: $VERSION, checksum: {linux: \"$MD5SUM_LINUX\", windows: \"$MD5SUM_WINDOWS\"}}))")"
+            LATEST_JSON="$(node -e "console.log(JSON.stringify({version: $VERSION, checksum: {linux: \"$MD5SUM_LINUX\", windows: \"$MD5SUM_WINDOWS\", macos: \"$MD5SUM_MACOS\"}}))")"
 
             git config --global user.email "andra.antariksa@gmail.com"
             git config --global user.name "Andra Antariksa"
