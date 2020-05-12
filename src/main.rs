@@ -1,6 +1,6 @@
 extern crate crossterm;
 extern crate cursive;
-#[cfg(not(target_os = "windows"))]
+#[cfg(any(target_os = "linux", target_os = "macos"))]
 extern crate nix;
 extern crate pest;
 extern crate webbrowser;

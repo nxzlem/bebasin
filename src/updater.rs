@@ -89,7 +89,7 @@ fn get_md5_digest<P: AsRef<Path>>(path: &P) -> Result<md5::Digest, ErrorKind> {
     }
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "macos"))]
 fn set_as_executable<P: AsRef<Path> + nix::NixPath>(path: &P) -> Result<(), ErrorKind> {
     use std::os::unix::io::IntoRawFd as _;
 
@@ -185,7 +185,7 @@ impl Updater {
         let latest = &self.latest.as_ref().unwrap();
 
         for asset in release.assets {
-            if asset.name.contains(".exe") {
+            if asset.name.contains("windows") {
                 let mut byte_data = Vec::new();
                 let mut curl_instance = curl::easy::Easy::new();
                 curl_instance.url(&asset.browser_download_url).unwrap();
@@ -240,15 +240,86 @@ impl Updater {
         Ok(())
     }
 
-    #[cfg(not(target_os = "windows"))]
+    #[cfg(target_os = "linux")]
     fn process_update(&self, release: Release) -> Result<(), ErrorKind> {
         // Bruh unsafe
         let latest = &self.latest.as_ref().unwrap();
 
         for asset in release.assets {
-            println!("2");
-            if !asset.name.contains(".exe") {
-                println!("3");
+            if asset.name.contains("linux") {
+                let mut byte_data = Vec::new();
+                let mut curl_instance = curl::easy::Easy::new();
+                println!("{}", asset.browser_download_url);
+                curl_instance.url(&asset.browser_download_url).unwrap();
+                curl_instance.follow_location(true).unwrap();
+                curl_instance.cookie_file("cookie").unwrap();
+                curl_instance.cookie_session(true).unwrap();
+                {
+                    println!("Running");
+                    let mut handler = curl_instance.transfer();
+                    handler
+                        .write_function(|data| {
+                            println!("Writing");
+                            byte_data.extend_from_slice(data);
+                            Ok(data.len())
+                        })
+                        .unwrap();
+                    println!("Performing");
+                    handler.perform().unwrap();
+                }
+
+                println!("4");
+
+                let mut updated_exe_path = std::env::current_exe().unwrap();
+                updated_exe_path.pop();
+                updated_exe_path.push(".bebasin_tmp");
+                // Bruh unsafe
+                let current_exe_path = &std::env::current_exe().unwrap();
+
+                {
+                    let mut file_created = fs::File::create(&updated_exe_path).unwrap();
+                    file_created.write(byte_data.as_slice());
+                }
+
+                println!(
+                    "{:?} == {:?}",
+                    format!("{:x}", get_md5_digest(&updated_exe_path).unwrap()),
+                    latest.checksum.linux
+                );
+
+                match get_md5_digest(&updated_exe_path) {
+                    Ok(digest) => {
+                        if format!("{:x}", digest) != latest.checksum.linux {
+                            return Err(ErrorKind::String(String::from("Download corrupt")));
+                        }
+                    }
+                    Err(err) => return Err(err),
+                };
+
+                if let Err(err) = set_as_executable(&updated_exe_path) {
+                    return Err(err);
+                }
+
+                if let Err(err) = nix::unistd::unlink(current_exe_path) {
+                    return Err(ErrorKind::NixError(err));
+                }
+
+                match fs::rename(&updated_exe_path, current_exe_path) {
+                    Err(err) => return Err(ErrorKind::IOError(err)),
+                    _ => (),
+                };
+            }
+        }
+        Ok(())
+    }
+
+    #[cfg(target_os = "macos")]
+    fn process_update(&self, release: Release) -> Result<(), ErrorKind> {
+        // Bruh unsafe
+        let latest = &self.latest.as_ref().unwrap();
+
+        for asset in release.assets {
+            if asset.name.contains("apple") {
                 let mut byte_data = Vec::new();
                 let mut curl_instance = curl::easy::Easy::new();
                 println!("{}", asset.browser_download_url);

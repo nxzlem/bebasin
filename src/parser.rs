@@ -9,7 +9,7 @@ pub enum ErrorKind {
     IOError(std::io::Error),
     PestRuleError(pest::error::Error<Rule>),
     SerdeJSONError(serde_json::Error),
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
     NixError(nix::Error),
     String(String),
 }
@@ -20,7 +20,7 @@ impl ErrorKind {
             ErrorKind::Error(err) => err.to_string(),
             ErrorKind::IOError(err) => err.to_string(),
             ErrorKind::PestRuleError(err) => err.to_string(),
-            #[cfg(target_os = "linux")]
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
             ErrorKind::NixError(err) => err.to_string(),
             ErrorKind::SerdeJSONError(err) => err.to_string(),
             ErrorKind::String(err) => err.to_owned(),
