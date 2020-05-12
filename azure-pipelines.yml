@@ -91,15 +91,15 @@ stages:
             LATEST_JSON="$(node -e "console.log(JSON.stringify({version: $VERSION, checksum: {linux: \"$MD5SUM_LINUX\", windows: \"$MD5SUM_WINDOWS\", macos: \"$MD5SUM_MACOS\"}}))")"
 
             git config --global user.email "andra.antariksa@gmail.com"
-            git config --global user.name "Andra Antariksa"
+            git config --global user.name "Aaabot"
 
             # Push if there's any difference
             # Every compilation will resulting in different checksum!
-            git clone https://andraantariksa:$(ACCESS_TOKEN)@github.com/bebasid/bebasin.git ../bebasin
+            git clone https://aaabot:$(ACCESS_TOKEN)@github.com/bebasid/bebasin.git ../bebasin
             #if ! cmp ../bebasin/latest.json latest.json >/dev/null 2>&1
             #then
               cd ../bebasin
-              git remote set-url origin https://andraantariksa:$(ACCESS_TOKEN)@github.com/bebasid/bebasin.git
+              git remote set-url origin https://aaabot:$(ACCESS_TOKEN)@github.com/bebasid/bebasin.git
               echo $LATEST_JSON > latest.json
               git add latest.json
               git commit -m "Renew md5sum of latest release: " -m "$LAST_COMMIT_MESSAGE"
@@ -111,7 +111,7 @@ stages:
           inputs:
               gitHubConnection: andraantariksa_accesstoken
               tagSource: manual
-              title: Latest
+              title: Latest Master release
               tag: '$(build.my_tag)'
               assetUploadMode: replace
               action: edit
