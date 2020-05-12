@@ -65,7 +65,7 @@ stages:
             targetPath: "$(Pipeline.Workspace)/target"
         - bash: |
             MY_TAG="$(Build.SourceBranch)"
-            MY_TAG=latest
+            MY_TAG=master
             echo $MY_TAG
             echo "##vso[task.setvariable variable=build.my_tag]$MY_TAG"
             DATE="$(date +%Y-%m-%d)"
@@ -111,7 +111,7 @@ stages:
           inputs:
               gitHubConnection: andraantariksa_accesstoken
               tagSource: manual
-              title: Latest
+              title: Latest Master release
               tag: '$(build.my_tag)'
               assetUploadMode: replace
               action: edit
