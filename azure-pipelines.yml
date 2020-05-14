@@ -73,24 +73,24 @@ stages:
             
             mkdir $(Pipeline.Workspace)/release
 
-            unzip $(Pipeline.Workspace)/target/bebasin\ -\ x86_64-pc-windows-msvc.zip -d $(Pipeline.Workspace)/target/windows
-            zip $(Pipeline.Workspace)/release/bebasin\ -\ x86_64-pc-windows-msvc.zip $(Pipeline.Workspace)/target/windows/b/x86_64-pc-windows-msvc/release/bebasin.exe
+            unzip $(Pipeline.Workspace)/target/bebasin-x86_64-pc-windows-msvc.zip -d $(Pipeline.Workspace)/target/windows
+            zip $(Pipeline.Workspace)/release/bebasin-x86_64-pc-windows-msvc.zip -D $(Pipeline.Workspace)/target/windows/b/x86_64-pc-windows-msvc/release/bebasin.exe
 
-            unzip $(Pipeline.Workspace)/target/bebasin\ -\ x86_64-unknown-linux-gnu.zip -d $(Pipeline.Workspace)/target/linux
-            zip $(Pipeline.Workspace)/release/bebasin\ -\ x86_64-unknown-linux-gnu.zip $(Pipeline.Workspace)/target/linux/b/x86_64-unknown-linux-gnu/release/bebasin
+            unzip $(Pipeline.Workspace)/target/bebasin-x86_64-unknown-linux-gnu.zip -d $(Pipeline.Workspace)/target/linux
+            zip $(Pipeline.Workspace)/release/bebasin-x86_64-unknown-linux-gnu.zip -D $(Pipeline.Workspace)/target/linux/b/x86_64-unknown-linux-gnu/release/bebasin
 
-            unzip $(Pipeline.Workspace)/target/bebasin\ -\ x86_64-apple-darwin.zip -d $(Pipeline.Workspace)/target/macos
-            zip $(Pipeline.Workspace)/release/bebasin\ -\ x86_64-apple-darwin.zip $(Pipeline.Workspace)/target/macos/b/x86_64-apple-darwin/release/bebasin
+            unzip $(Pipeline.Workspace)/target/bebasin-x86_64-apple-darwin.zip -d $(Pipeline.Workspace)/target/macos
+            zip $(Pipeline.Workspace)/release/bebasin-x86_64-apple-darwin.zip  -D $(Pipeline.Workspace)/target/macos/b/x86_64-apple-darwin/release/bebasin
           displayName: "Unzip files, create date and tag variables"
         - bash: |
-            MD5SUM_WINDOWS="$(md5sum $(Pipeline.Workspace)/release/bebasin\ -\ x86_64-pc-windows-msvc.zip | cut -d" " -f1)"
-            MD5SUM_LINUX="$(md5sum $(Pipeline.Workspace)/release/bebasin\ -\ x86_64-unknown-linux-gnu.zip | cut -d" " -f1)"
-            MD5SUM_MACOS="$(md5sum $(Pipeline.Workspace)/release/bebasin\ -\ x86_64-apple-darwin.zip | cut -d" " -f1)"
+            MD5SUM_WINDOWS="$(md5sum $(Pipeline.Workspace)/release/bebasin-x86_64-pc-windows-msvc.zip | cut -d" " -f1)"
+            MD5SUM_LINUX="$(md5sum $(Pipeline.Workspace)/release/bebasin-x86_64-unknown-linux-gnu.zip | cut -d" " -f1)"
+            MD5SUM_MACOS="$(md5sum $(Pipeline.Workspace)/release/bebasin-x86_64-apple-darwin.zip | cut -d" " -f1)"
             VERSION="$(date +%Y%m%d)"
             LAST_COMMIT_MESSAGE="$(git log -1 --pretty=%B)"
             LATEST_JSON="$(node -e "console.log(JSON.stringify({version: $VERSION, checksum: {linux: \"$MD5SUM_LINUX\", windows: \"$MD5SUM_WINDOWS\", macos: \"$MD5SUM_MACOS\"}}))")"
 
-            git config --global user.email "andra.antariksa@gmail.com"
+            git config --global user.email "andra.antariksa+bot@gmail.com"
             git config --global user.name "Aaabot"
 
             # Push if there's any difference
@@ -102,7 +102,7 @@ stages:
               git remote set-url origin https://aaabot:$(ACCESS_TOKEN)@github.com/bebasid/bebasin.git
               echo $LATEST_JSON > latest.json
               git add latest.json
-              git commit -m "Renew md5sum of latest release: " -m "$LAST_COMMIT_MESSAGE"
+              git commit -m "Renew md5sum of latest release"
               git push origin master
             #fi
           displayName: "Update md5sum"
