@@ -11,6 +11,7 @@ pub enum ErrorKind {
     SerdeJSONError(serde_json::Error),
     #[cfg(any(target_os = "linux", target_os = "macos"))]
     NixError(nix::Error),
+    ZipError(zip::result::ZipError),
     String(String),
 }
 
@@ -23,6 +24,7 @@ impl ErrorKind {
             #[cfg(any(target_os = "linux", target_os = "macos"))]
             ErrorKind::NixError(err) => err.to_string(),
             ErrorKind::SerdeJSONError(err) => err.to_string(),
+            ErrorKind::ZipError(err) => err.to_string(),
             ErrorKind::String(err) => err.to_owned(),
         }
     }

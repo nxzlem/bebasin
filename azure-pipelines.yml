@@ -73,14 +73,14 @@ stages:
             
             mkdir $(Pipeline.Workspace)/release
 
-            unzip $(Pipeline.Workspace)/target/bebasin-x86_64-pc-windows-msvc.zip -d $(Pipeline.Workspace)/target/windows
-            zip $(Pipeline.Workspace)/release/bebasin-x86_64-pc-windows-msvc.zip -D $(Pipeline.Workspace)/target/windows/b/x86_64-pc-windows-msvc/release/bebasin.exe
+            unzip $(Pipeline.Workspace)/target/bebasin\ -\ x86_64-pc-windows-msvc.zip -d $(Pipeline.Workspace)/target/windows
+            zip $(Pipeline.Workspace)/release/bebasin-x86_64-pc-windows-msvc.zip -j $(Pipeline.Workspace)/target/windows/b/x86_64-pc-windows-msvc/release/bebasin.exe
 
-            unzip $(Pipeline.Workspace)/target/bebasin-x86_64-unknown-linux-gnu.zip -d $(Pipeline.Workspace)/target/linux
-            zip $(Pipeline.Workspace)/release/bebasin-x86_64-unknown-linux-gnu.zip -D $(Pipeline.Workspace)/target/linux/b/x86_64-unknown-linux-gnu/release/bebasin
+            unzip $(Pipeline.Workspace)/target/bebasin\ -\ x86_64-unknown-linux-gnu.zip -d $(Pipeline.Workspace)/target/linux
+            zip $(Pipeline.Workspace)/release/bebasin-x86_64-unknown-linux-gnu.zip -j $(Pipeline.Workspace)/target/linux/b/x86_64-unknown-linux-gnu/release/bebasin
 
-            unzip $(Pipeline.Workspace)/target/bebasin-x86_64-apple-darwin.zip -d $(Pipeline.Workspace)/target/macos
-            zip $(Pipeline.Workspace)/release/bebasin-x86_64-apple-darwin.zip  -D $(Pipeline.Workspace)/target/macos/b/x86_64-apple-darwin/release/bebasin
+            unzip $(Pipeline.Workspace)/target/bebasin\ -\ x86_64-apple-darwin.zip -d $(Pipeline.Workspace)/target/macos
+            zip $(Pipeline.Workspace)/release/bebasin-x86_64-apple-darwin.zip  -j $(Pipeline.Workspace)/target/macos/b/x86_64-apple-darwin/release/bebasin
           displayName: "Unzip files, create date and tag variables"
         - bash: |
             MD5SUM_WINDOWS="$(md5sum $(Pipeline.Workspace)/release/bebasin-x86_64-pc-windows-msvc.zip | cut -d" " -f1)"

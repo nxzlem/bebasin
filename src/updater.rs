@@ -1,5 +1,4 @@
 use crate::os::{HOSTS_BACKUP_PATH, HOSTS_PATH};
-use crate::parser::ErrorKind::Error;
 use crate::parser::{parse_from_file, write_to_file, ErrorKind};
 use crate::{CURRENT_VERSION, LATEST_VERSION_URL, UPDATE_URL};
 use serde::Deserialize;
@@ -7,6 +6,7 @@ use std::env::{current_dir, current_exe};
 use std::fs;
 use std::io::Write as _;
 use std::path::Path;
+use std::io::Read;
 
 pub fn remove_temp_file() {
     let mut tmp_file = current_dir().unwrap();
@@ -38,6 +38,7 @@ pub fn backup() -> Result<(), ErrorKind> {
 pub struct Checksum {
     linux: String,
     windows: String,
+    macos: String,
 }
 
 #[derive(Deserialize, Clone)]
@@ -224,6 +225,24 @@ impl Updater {
                     Err(err) => return Err(err),
                 };
 
+                let mut buf = Vec::new();
+
+                {
+                    let zipfile = std::fs::File::open(&updated_exe_path).unwrap();
+
+                    let mut archive = zip::ZipArchive::new(zipfile).unwrap();
+
+                    let mut file = match archive.by_name("bebasin.exe")
+                    {
+                        Ok(file) => file,
+                        Err(err) => return Err(ErrorKind::ZipError(err))
+                    };
+
+                    file.read_to_end(&mut buf);
+                }
+                    
+                std::fs::File::create(&updated_exe_path).unwrap().write(&buf);
+
                 if let Err(err) = fs::rename(&current_exe_path, &tmp_exe_path) {
                     return Err(ErrorKind::IOError(err));
                 }
@@ -259,16 +278,12 @@ impl Updater {
                     let mut handler = curl_instance.transfer();
                     handler
                         .write_function(|data| {
-                            println!("Writing");
                             byte_data.extend_from_slice(data);
                             Ok(data.len())
                         })
                         .unwrap();
-                    println!("Performing");
                     handler.perform().unwrap();
                 }
-
-                println!("4");
 
                 let mut updated_exe_path = std::env::current_exe().unwrap();
                 updated_exe_path.pop();
@@ -281,12 +296,6 @@ impl Updater {
                     file_created.write(byte_data.as_slice());
                 }
 
-                println!(
-                    "{:?} == {:?}",
-                    format!("{:x}", get_md5_digest(&updated_exe_path).unwrap()),
-                    latest.checksum.linux
-                );
-
                 match get_md5_digest(&updated_exe_path) {
                     Ok(digest) => {
                         if format!("{:x}", digest) != latest.checksum.linux {
@@ -296,7 +305,25 @@ impl Updater {
                     Err(err) => return Err(err),
                 };
 
-                if let Err(err) = set_as_executable(&updated_exe_path) {
+                let mut buf = Vec::new();
+
+                {
+                    let zipfile = std::fs::File::open(&updated_exe_path).unwrap();
+
+                    let mut archive = zip::ZipArchive::new(zipfile).unwrap();
+
+                    let mut file = match archive.by_name("bebasin")
+                    {
+                        Ok(file) => file,
+                        Err(err) => return Err(ErrorKind::ZipError(err))
+                    };
+
+                    file.read_to_end(&mut buf);
+                }
+                    
+                std::fs::File::create(&updated_exe_path).unwrap().write(&buf);
+                
+                if let Err(err) = set_as_executable(&std::path::PathBuf::from(&updated_exe_path)) {
                     return Err(err);
                 }
 
@@ -322,26 +349,20 @@ impl Updater {
             if asset.name.contains("apple") {
                 let mut byte_data = Vec::new();
                 let mut curl_instance = curl::easy::Easy::new();
-                println!("{}", asset.browser_download_url);
                 curl_instance.url(&asset.browser_download_url).unwrap();
                 curl_instance.follow_location(true).unwrap();
                 curl_instance.cookie_file("cookie").unwrap();
                 curl_instance.cookie_session(true).unwrap();
                 {
-                    println!("Running");
                     let mut handler = curl_instance.transfer();
                     handler
                         .write_function(|data| {
-                            println!("Writing");
                             byte_data.extend_from_slice(data);
                             Ok(data.len())
                         })
                         .unwrap();
-                    println!("Performing");
                     handler.perform().unwrap();
                 }
-
-                println!("4");
 
                 let mut updated_exe_path = std::env::current_exe().unwrap();
                 updated_exe_path.pop();
@@ -354,22 +375,34 @@ impl Updater {
                     file_created.write(byte_data.as_slice());
                 }
 
-                println!(
-                    "{:?} == {:?}",
-                    format!("{:x}", get_md5_digest(&updated_exe_path).unwrap()),
-                    latest.checksum.linux
-                );
-
                 match get_md5_digest(&updated_exe_path) {
                     Ok(digest) => {
-                        if format!("{:x}", digest) != latest.checksum.linux {
+                        if format!("{:x}", digest) != latest.checksum.macos {
                             return Err(ErrorKind::String(String::from("Download corrupt")));
                         }
                     }
                     Err(err) => return Err(err),
                 };
 
-                if let Err(err) = set_as_executable(&updated_exe_path) {
+                let mut buf = Vec::new();
+
+                {
+                    let zipfile = std::fs::File::open(&updated_exe_path).unwrap();
+
+                    let mut archive = zip::ZipArchive::new(zipfile).unwrap();
+
+                    let mut file = match archive.by_name("bebasin")
+                    {
+                        Ok(file) => file,
+                        Err(err) => return Err(ErrorKind::ZipError(err))
+                    };
+
+                    file.read_to_end(&mut buf);
+                }
+                    
+                std::fs::File::create(&updated_exe_path).unwrap().write(&buf);
+
+                if let Err(err) = set_as_executable(&std::path::PathBuf::from(&updated_exe_path)) {
                     return Err(err);
                 }
 

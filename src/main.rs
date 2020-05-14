@@ -8,6 +8,7 @@ extern crate webbrowser;
 extern crate winapi;
 #[macro_use]
 extern crate pest_derive;
+extern crate zip;
 
 mod app;
 mod helpers;
