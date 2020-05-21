@@ -4,13 +4,37 @@
 
 [Read the README in Bahasa Indonesia here](README.md)
 
-A clone of [BEBASID](https://github.com/gvoze32/bebasid) repository with modification.
+---
+
+## Table of Contents
+
+- [Bebasin](#bebasin)
+  - [Table of Contents](#table-of-contents)
+  - [What's the Difference with BEBASID?](#whats-the-difference-with-bebasid)
+  - [Screenshot](#screenshot)
+  - [Download](#download)
+  - [License](#license)
+
+---
+
+A clone of [BEBASID](https://github.com/gvoze32/bebasid) repository.
 
 Bebasin helps you to bypass all of the blocked content by Internet Positif with hosts file.
 
-[Supported sites](SITES.md)
+## What's the Difference with BEBASID?
 
-**This application is under development**
+- Terminal user interface
+- Easier to use
+- Updater
+- Auto backup hosts
+- Custom hosts (Coming soon)
+- Uninstall (Coming soon)
+
+## Screenshot
+
+![Bebasin in Windows 10](https://i.imgur.com/PFC9uEO.png)
+
+Bebasin in Windows 10
 
 ## Download
 
@@ -18,4 +42,4 @@ Checkout the [releases](https://github.com/bebasid/bebasin/releases)
 
 ## License
 
-[MIT Licensed](LICENSE)
+Licensed under [MIT Licensed](LICENSE)

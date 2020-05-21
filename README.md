@@ -4,13 +4,37 @@
 
 [Read the README in English here](README.en.md)
 
-Kloning dari repositori [BEBASID](https://github.com/gvoze32/bebasid) dengan modifikasi.
+---
+
+## Daftar Isi
+
+- [Bebasin](#bebasin)
+  - [Daftar Isi](#daftar-isi)
+  - [Apa Bedanya dengan Bebasid?](#apa-bedanya-dengan-bebasid)
+  - [Tangkapan Layar](#tangkapan-layar)
+  - [Unduh](#unduh)
+  - [License](#license)
+
+---
+
+Kloning dari repositori [BEBASID](https://github.com/gvoze32/bebasid).
 
 Bebasin dapat membantu anda untuk bypass semua konten website yang diblokir Internet Positif melalui file hosts.
 
-[Situs yang didukung](SITES.md)
+## Apa Bedanya dengan Bebasid?
 
-**Aplikasi ini sedang berada dalam tahap pengembangan**
+- *Terminal user interface*
+- Lebih mudah digunakan
+- Dapat diperbaharui
+- *Backup* hosts secara otomatis
+- *Custom* hosts (Belum diimplementasikan)
+- *Uninstall* (Belum diimplementasikan)
+
+## Tangkapan Layar
+
+![Bebasin di Windows 10](https://i.imgur.com/PFC9uEO.png)
+
+Bebasin di Windows 10
 
 ## Unduh
 
@@ -18,4 +42,4 @@ Cek [rilisan](https://github.com/bebasid/bebasin/releases) kami
 
 ## License
 
-[Terlisensi MIT](LICENSE)
+Dilisensikan di bawah [Lisensi MIT](LICENSE)
