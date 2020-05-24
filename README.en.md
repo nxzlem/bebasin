@@ -2,7 +2,7 @@
 
 [![Build Status](https://dev.azure.com/andraantariksa/Bebasin/_apis/build/status/bebasid.bebasin?branchName=master)](https://dev.azure.com/andraantariksa/Bebasin/_build/latest?definitionId=4&branchName=master)
 
-[Read the README in Bahasa Indonesia here](README.md)
+[Bacakan README Bahasa Indonesia disini](README.md)
 
 ---
 
@@ -27,66 +27,66 @@ Bebasin helps you to bypass all of the blocked content by Internet Positif with 
 
 ## I Have a Question
 
-Please read [Frequently Asked Question](FAQ.en.md)
+Please read the [Frequently Asked Question](FAQ.en.md) first.
 
 ## Quickstart
 
-- [Download](#unduh) the program
-- Unzip the program
-- For thos who are using Linux or MacOS, you have to give an access to the program so it can run as executable. You can run this command below
+- [Download](#unduh) the program.
+- Unzip the program.
+- For thos who are using Linux or MacOS, you have to give an access to the program so it can run as executable. You can run this command below.
 
 ```
 sudo chmod +x ./bebasin
 ```
 
-- Run the program as admin
+- Run the Program as Administrator.
 
 ### Windows
 
-![Run as administrator di Windows](https://i.imgur.com/p7VstKF.png)
+![Run as Administrator di Windows](https://i.imgur.com/p7VstKF.png)
 
-*Run as administrator* in Windows
+*Run as Administrator* in Windows
 
-### Linux or MacOS
+### Linux/MacOS
 
 ```
 sudo ./bebasin
 ```
 
-- The program will be opened like below
+- The Program will be opened in Following Displays.
 
-![Main menu Bebasin](https://i.imgur.com/PFC9uEO.png)
+![Main Menu](https://i.imgur.com/reZApao.png)
 
-- Press enter on the keyboard or you can click the "Install" button using mouse
-- Press "Confirm" to confirm the installation
+- Press "Enter" on the keyboard or Click the "Install" Button using Mouse.
+- Press "Confirm" to Confirm the Installation.
 
-![Confirm Bebasin installation](https://i.imgur.com/YCY1It3.png)
+![Confirm Installation](https://i.imgur.com/eZqIQZM.png)
 
-- Bebasin has been installed in your computer
+- Bebasin has been installed in your computer.
 
-![Bebasin installation finished](https://i.imgur.com/Mz9kLaG.png)
+![Installation Finished](https://i.imgur.com/3NVCBJ6.png)
 
-- Last, you have to restart your machine to apply the effect
+- Last, you have to restart your machine to apply the effect.
 
 ## What's the Difference with BEBASID?
 
-- Terminal user interface
-- Easier to use
-- Updater
-- Auto backup hosts
-- Custom hosts (Coming soon)
+- Terminal User Interface
+- Easier to Use
+- Updates
+- Auto Backup Hosts
+- Custom Hosts (Coming soon)
 - Uninstall (Coming soon)
 
-## Screenshot
+## Screenshots
 
-![Bebasin in Windows 10](https://i.imgur.com/PFC9uEO.png)
+![Bebasin in Windows 10](https://i.imgur.com/reZApao.png)
 
-Bebasin in Windows 10
+Showcase Bebasin in Windows 10
 
-## Download
+## Downloads
 
-Checkout the [releases](https://github.com/bebasid/bebasin/releases)
+Checkout the [releases](https://github.com/bebasid/bebasin/releases).
 
 ## License
 
-Licensed under [MIT Licensed](LICENSE)
+Bebasin is Licensed under [MIT Licensed](LICENSE).
