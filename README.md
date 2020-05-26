@@ -55,16 +55,16 @@ sudo ./bebasin
 
 - Program akan terbuka dengan Tampilan Berikut.
 
-![Main Menu](https://i.imgur.com/PFC9uEO.png)
+![Main Menu](https://i.imgur.com/reZApao.png)
 
 - Tekan "Enter" atau Klik Tombol "Install" dengan Mouse Kiri.
 - Tekan *Confirm* untuk dikonfirmasikan.
 
-![Konfirmasi Instalasi](https://i.imgur.com/YCY1It3.png)
+![Konfirmasi Instalasi](https://i.imgur.com/eZqIQZM.png)
 
 - Bebasin sudah terpasang di Komputer Anda.
 
-![Instalasi Selesai](https://i.imgur.com/Mz9kLaG.png)
+![Instalasi Selesai](https://i.imgur.com/3NVCBJ6.png)
 
 - Terakhir, Anda tinggal menyalakan ulang Komputer Anda.
 
@@ -79,7 +79,7 @@ sudo ./bebasin
 
 ## Tangkapan Layar
 
-![Bebasin di Windows 10](https://i.imgur.com/PFC9uEO.png)
+![Bebasin di Windows 10](https://i.imgur.com/reZApao.png)
 
 Bebasin di Windows 10
 
