@@ -23,70 +23,70 @@
 
 Kloning dari repositori [BEBASID](https://github.com/gvoze32/bebasid).
 
-Bebasin dapat membantu anda untuk bypass semua konten website yang diblokir Internet Positif melalui file hosts.
+Bebasin dapat membantu anda untuk bypass semua konten website yang diblokir Internet Positif melalui [_file hosts_](https://en.wikipedia.org/wiki/Hosts_(file)).
 
 ## Saya Punya Pertanyaan
 
-Silahkan baca [Soal Sering Ditanyakan](FAQ.md) terlebih dahulu
+Silahkan baca [Soal Sering Ditanyakan](FAQ.md) terlebih dahulu.
 
 ## Panduan Singkat
 
-- [Unduh](#unduh) terlebih dahulu
-- Unzip programnya
-- Bagi yang menggunakan Linux atau MacOS, beri akses programnya untuk berjalan sebagai *executable*. Anda bisa menjalankan perintah di bawah
+- [Unduh](#unduh) terlebih dahulu.
+- Unzip programnya.
+- Bagi yang menggunakan Linux atau MacOS, beri akses programnya untuk berjalan sebagai *executable*. Anda bisa menjalankan perintah di bawah.
 
 ```
 sudo chmod +x ./bebasin
 ```
 
-- Buka program dengan akses admin
+- Buka Program dengan Akses Administrasi.
 
 ### Windows
 
-![Run as administrator di Windows](https://i.imgur.com/p7VstKF.png)
+![Run as Administrator di Windows](https://i.imgur.com/p7VstKF.png)
 
-*Run as administrator* di Windows
+*Run as Administrator* di Windows
 
-### Linux atau MacOS
+### Linux/MacOS
 
 ```
 sudo ./bebasin
 ```
 
-- Program akan terbuka dengan tampilan berikut
+- Program akan terbuka dengan Tampilan Berikut.
 
-![Main menu Bebasin](https://i.imgur.com/PFC9uEO.png)
+![Main Menu](https://i.imgur.com/reZApao.png)
 
-- Tekan enter atau klik tombol "Install"
-- Tekan *Confirm* untuk konfirmasi
+- Tekan "Enter" atau Klik Tombol "Install" dengan Mouse Kiri.
+- Tekan *Confirm* untuk dikonfirmasikan.
 
-![Konfirmasi instalasi Bebasin](https://i.imgur.com/YCY1It3.png)
+![Konfirmasi Instalasi](https://i.imgur.com/eZqIQZM.png)
 
-- Bebasin sudah terpasang di komputer Anda
+- Bebasin sudah terpasang di Komputer Anda.
 
-![Instalasi Bebasin selesai](https://i.imgur.com/Mz9kLaG.png)
+![Instalasi Selesai](https://i.imgur.com/3NVCBJ6.png)
 
-- Terakhir, Anda tinggal menyalakan ulang komputer Anda
+- Terakhir, Anda tinggal menyalakan ulang Komputer Anda.
 
 ## Apa Bedanya dengan Bebasid?
 
-- *Terminal user interface*
-- Lebih mudah digunakan
-- Dapat diperbaharui
+- *Terminal User Interface*
+- Lebih Mudah Digunakan
+- Dapat Diperbaharui
 - *Backup* hosts secara otomatis
-- *Custom* hosts (Belum diimplementasikan)
-- *Uninstall* (Belum diimplementasikan)
+- *Custom* hosts (Belum Diimplementasikan)
+- *Uninstall* (Belum Diimplementasikan)
 
 ## Tangkapan Layar
 
-![Bebasin di Windows 10](https://i.imgur.com/PFC9uEO.png)
+![Bebasin di Windows 10](https://i.imgur.com/reZApao.png)
 
 Bebasin di Windows 10
 
 ## Unduh
 
-Cek [rilisan](https://github.com/bebasid/bebasin/releases) kami
+Cek [rilisan](https://github.com/bebasid/bebasin/releases) kami.
 
 ## License
 
-Dilisensikan di bawah [Lisensi MIT](LICENSE)
+Bebasin dilisensikan di bawah [Lisensi MIT](LICENSE).
