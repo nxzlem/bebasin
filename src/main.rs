@@ -17,7 +17,7 @@ mod parser;
 mod ui;
 mod updater;
 
-const CURRENT_VERSION: u64 = 20200605;
+const CURRENT_VERSION: u64 = 20200607;
 const REPOSITORY_URL: &'static str = "https://github.com/bebasid/bebasin";
 const LATEST_VERSION_URL: &'static str =
     "https://raw.githubusercontent.com/bebasid/bebasin/master/latest.json";
