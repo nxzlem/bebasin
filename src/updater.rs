@@ -4,9 +4,9 @@ use crate::{CURRENT_VERSION, LATEST_VERSION_URL, UPDATE_URL};
 use serde::Deserialize;
 use std::env::{current_dir, current_exe};
 use std::fs;
+use std::io::Read;
 use std::io::Write as _;
 use std::path::Path;
-use std::io::Read;
 
 pub fn remove_temp_file() {
     let mut tmp_file = current_dir().unwrap();
@@ -232,16 +232,17 @@ impl Updater {
 
                     let mut archive = zip::ZipArchive::new(zipfile).unwrap();
 
-                    let mut file = match archive.by_name("bebasin.exe")
-                    {
+                    let mut file = match archive.by_name("bebasin.exe") {
                         Ok(file) => file,
-                        Err(err) => return Err(ErrorKind::ZipError(err))
+                        Err(err) => return Err(ErrorKind::ZipError(err)),
                     };
 
                     file.read_to_end(&mut buf);
                 }
-                    
-                std::fs::File::create(&updated_exe_path).unwrap().write(&buf);
+
+                std::fs::File::create(&updated_exe_path)
+                    .unwrap()
+                    .write(&buf);
 
                 if let Err(err) = fs::rename(&current_exe_path, &tmp_exe_path) {
                     return Err(ErrorKind::IOError(err));
@@ -312,17 +313,18 @@ impl Updater {
 
                     let mut archive = zip::ZipArchive::new(zipfile).unwrap();
 
-                    let mut file = match archive.by_name("bebasin")
-                    {
+                    let mut file = match archive.by_name("bebasin") {
                         Ok(file) => file,
-                        Err(err) => return Err(ErrorKind::ZipError(err))
+                        Err(err) => return Err(ErrorKind::ZipError(err)),
                     };
 
                     file.read_to_end(&mut buf);
                 }
-                    
-                std::fs::File::create(&updated_exe_path).unwrap().write(&buf);
-                
+
+                std::fs::File::create(&updated_exe_path)
+                    .unwrap()
+                    .write(&buf);
+
                 if let Err(err) = set_as_executable(&std::path::PathBuf::from(&updated_exe_path)) {
                     return Err(err);
                 }
@@ -331,10 +333,9 @@ impl Updater {
                     return Err(ErrorKind::NixError(err));
                 }
 
-                match fs::rename(&updated_exe_path, current_exe_path) {
-                    Err(err) => return Err(ErrorKind::IOError(err)),
-                    _ => (),
-                };
+                if let Err(err) = fs::rename(&updated_exe_path, current_exe_path) {
+                    return Err(ErrorKind::IOError(err));
+                }
             }
         }
         Ok(())
@@ -391,16 +392,17 @@ impl Updater {
 
                     let mut archive = zip::ZipArchive::new(zipfile).unwrap();
 
-                    let mut file = match archive.by_name("bebasin")
-                    {
+                    let mut file = match archive.by_name("bebasin") {
                         Ok(file) => file,
-                        Err(err) => return Err(ErrorKind::ZipError(err))
+                        Err(err) => return Err(ErrorKind::ZipError(err)),
                     };
 
                     file.read_to_end(&mut buf);
                 }
-                    
-                std::fs::File::create(&updated_exe_path).unwrap().write(&buf);
+
+                std::fs::File::create(&updated_exe_path)
+                    .unwrap()
+                    .write(&buf);
 
                 if let Err(err) = set_as_executable(&std::path::PathBuf::from(&updated_exe_path)) {
                     return Err(err);

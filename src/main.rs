@@ -8,6 +8,7 @@ extern crate webbrowser;
 extern crate winapi;
 #[macro_use]
 extern crate pest_derive;
+extern crate itertools;
 extern crate zip;
 
 mod app;
@@ -17,14 +18,14 @@ mod parser;
 mod ui;
 mod updater;
 
+#[allow(clippy::unreadable_literal)]
 const CURRENT_VERSION: u64 = 20200607;
-const REPOSITORY_URL: &'static str = "https://github.com/bebasid/bebasin";
-const LATEST_VERSION_URL: &'static str =
+const REPOSITORY_URL: &str = "https://github.com/bebasid/bebasin";
+const LATEST_VERSION_URL: &str =
     "https://raw.githubusercontent.com/bebasid/bebasin/master/latest.json";
-const UPDATE_URL: &'static str =
-    "https://api.github.com/repos/bebasid/bebasin/releases/latest";
-const HOSTS_HEADER: &'static str = include_str!("../misc/header-hosts");
-const HOSTS_BEBASIN: &'static str = include_str!("../misc/hosts");
+const UPDATE_URL: &str = "https://api.github.com/repos/bebasid/bebasin/releases/latest";
+const HOSTS_HEADER: &str = include_str!("../misc/header-hosts");
+const HOSTS_BEBASIN: &str = include_str!("../misc/hosts");
 
 fn main() {
     // let mut u = updater::Updater::new();

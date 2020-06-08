@@ -2,10 +2,7 @@ use crate::os::{HOSTS_BACKUP_PATH, HOSTS_PATH};
 use crate::parser::{parse_from_file, parse_from_str, write_to_file, ErrorKind};
 use crate::{updater, HOSTS_BEBASIN, HOSTS_HEADER, REPOSITORY_URL};
 
-use cursive::views::{
-    Button, Checkbox, Dialog, DummyView, EditView, Layer, LinearLayout, ListView, SelectView,
-    TextView,
-};
+use cursive::views::{Button, Dialog, DummyView, LinearLayout, TextView};
 use cursive::Cursive;
 
 use crate::helpers::AppendableMap;
@@ -118,7 +115,7 @@ fn update(cursive: &mut Cursive) {
         Err(err) => {
             return {
                 error(cursive, err);
-            }
+            };
         }
     };
 
@@ -126,7 +123,9 @@ fn update(cursive: &mut Cursive) {
 
     if !updater_instance.is_updatable() {
         let warning_layer = Dialog::text("You have been using the latest update application")
-            .button("Ok", |cursive| { cursive.pop_layer(); })
+            .button("Ok", |cursive| {
+                cursive.pop_layer();
+            })
             .title("Warning");
         cursive.add_layer(warning_layer);
         return;
@@ -140,7 +139,7 @@ fn update(cursive: &mut Cursive) {
     .button("No", |cursive| {
         cursive.pop_layer();
     })
-    .button("Yes",  move|cursive| match updater_instance.update() {
+    .button("Yes", move |cursive| match updater_instance.update() {
         Ok(_) => {
             let updated_layer =
                 Dialog::text("The application has been updated, please re-run the application")
@@ -149,7 +148,7 @@ fn update(cursive: &mut Cursive) {
                     });
             cursive.add_layer(updated_layer);
         }
-        Err(err) => return { error(cursive, err) },
+        Err(err) => error(cursive, err),
     });
     cursive.add_layer(confirmation_layer);
 }

@@ -1,5 +1,7 @@
+use itertools::Itertools as _;
 use pest::Parser;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+use std::fmt;
 use std::fs;
 use std::io::prelude::*;
 
@@ -15,24 +17,28 @@ pub enum ErrorKind {
     String(String),
 }
 
-impl ErrorKind {
-    pub fn to_string(&self) -> String {
-        match self {
-            ErrorKind::Error(err) => err.to_string(),
-            ErrorKind::IOError(err) => err.to_string(),
-            ErrorKind::PestRuleError(err) => err.to_string(),
-            #[cfg(any(target_os = "linux", target_os = "macos"))]
-            ErrorKind::NixError(err) => err.to_string(),
-            ErrorKind::SerdeJSONError(err) => err.to_string(),
-            ErrorKind::ZipError(err) => err.to_string(),
-            ErrorKind::String(err) => err.to_owned(),
-        }
+impl fmt::Display for ErrorKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                ErrorKind::Error(err) => err.to_string(),
+                ErrorKind::IOError(err) => err.to_string(),
+                ErrorKind::PestRuleError(err) => err.to_string(),
+                #[cfg(any(target_os = "linux", target_os = "macos"))]
+                ErrorKind::NixError(err) => err.to_string(),
+                ErrorKind::SerdeJSONError(err) => err.to_string(),
+                ErrorKind::ZipError(err) => err.to_string(),
+                ErrorKind::String(err) => err.to_owned(),
+            }
+        )
     }
 }
 
 // TODO
 // Migrate to HashSet to remove duplication (?)
-type Hosts = HashMap<String, Vec<String>>;
+type Hosts = HashMap<String, HashSet<String>>;
 
 #[derive(Parser)]
 #[grammar = "grammar.pest"]
@@ -53,7 +59,7 @@ pub fn write_to_file(file_path: &str, hosts: &Hosts, header: &str) -> Result<(),
     hosts_stringify.push_str(header);
     for host in hosts {
         let ip = &host.0;
-        let hostnames = &host.1.join(" ");
+        let hostnames = &host.1.into_iter().join(" ");
 
         hosts_stringify.push_str(&format!("{} {}\n", ip, hostnames));
     }
@@ -73,44 +79,41 @@ pub fn parse_from_file(file_path: &str) -> Result<Hosts, ErrorKind> {
 
 pub fn parse_from_str(str: &str) -> Result<Hosts, ErrorKind> {
     let mut hosts: Hosts = HashMap::new();
-    let res = HostsParser::parse(Rule::main, str);
+    let res = match HostsParser::parse(Rule::main, str) {
+        Ok(x) => x,
+        Err(err) => return Err(ErrorKind::PestRuleError(err)),
+    };
 
-    if let Err(err) = res {
-        return Err(ErrorKind::PestRuleError(err));
-    }
+    for pair in res {
+        if let Rule::statement = pair.as_rule() {
+            let mut ip = String::new();
+            let mut hostnames: HashSet<String> = HashSet::new();
 
-    for pairs in res {
-        for pair in pairs {
-            match pair.as_rule() {
-                Rule::statement => {
-                    let mut ip = String::new();
-                    let mut hostnames: Vec<String> = Vec::new();
-
-                    for inner_pair in pair.into_inner() {
-                        match inner_pair.as_rule() {
-                            Rule::ip => {
-                                ip = inner_pair.as_str().to_owned();
-                            }
-                            Rule::hostnames => {
-                                for hostname in inner_pair.into_inner() {
-                                    hostnames.push(hostname.as_str().to_owned());
-                                }
-                            }
-                            _ => {}
+            for inner_pair in pair.into_inner() {
+                match inner_pair.as_rule() {
+                    Rule::ip => {
+                        ip = inner_pair.as_str().to_owned();
+                    }
+                    Rule::hostnames => {
+                        for hostname in inner_pair.into_inner() {
+                            hostnames.insert(hostname.as_str().to_owned());
                         }
                     }
-
-                    match hosts.get_mut(&ip) {
-                        Some(old_val) => {
-                            old_val.append(&mut hostnames);
-                        }
-                        None => {
-                            hosts.insert(ip, hostnames);
-                        }
-                    };
+                    _ => {}
                 }
-                _ => {}
             }
+
+            match hosts.get_mut(&ip) {
+                Some(old_val) => {
+                    hostnames.into_iter().for_each(|x| {
+                        old_val.insert(x);
+                    });
+                    // old_val.append(&mut hostnames);
+                }
+                None => {
+                    hosts.insert(ip, hostnames);
+                }
+            };
         }
     }
     Ok(hosts)
