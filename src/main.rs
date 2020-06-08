@@ -19,7 +19,7 @@ mod ui;
 mod updater;
 
 #[allow(clippy::unreadable_literal)]
-const CURRENT_VERSION: u64 = 20200607;
+const CURRENT_VERSION: u64 = 20200608;
 const REPOSITORY_URL: &str = "https://github.com/bebasid/bebasin";
 const LATEST_VERSION_URL: &str =
     "https://raw.githubusercontent.com/bebasid/bebasin/master/latest.json";
