@@ -1,19 +1,6 @@
 use crate::ui;
 use cursive::event::Key;
 use cursive::Cursive;
-use serde::Deserialize;
-
-#[derive(Deserialize)]
-struct Checksum {
-    linux: String,
-    windows: String,
-}
-
-#[derive(Deserialize)]
-struct Latest {
-    version: u64,
-    checksum: Checksum,
-}
 
 pub struct App {
     cursive: Cursive,

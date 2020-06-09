@@ -1,43 +1,10 @@
 use itertools::Itertools as _;
 use pest::Parser;
 use std::collections::{HashMap, HashSet};
-use std::fmt;
 use std::fs;
 use std::io::prelude::*;
+use crate::error::ErrorKind;
 
-#[derive(Debug)]
-pub enum ErrorKind {
-    Error(Box<dyn std::error::Error>),
-    IOError(std::io::Error),
-    PestRuleError(pest::error::Error<Rule>),
-    SerdeJSONError(serde_json::Error),
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
-    NixError(nix::Error),
-    ZipError(zip::result::ZipError),
-    String(String),
-}
-
-impl fmt::Display for ErrorKind {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                ErrorKind::Error(err) => err.to_string(),
-                ErrorKind::IOError(err) => err.to_string(),
-                ErrorKind::PestRuleError(err) => err.to_string(),
-                #[cfg(any(target_os = "linux", target_os = "macos"))]
-                ErrorKind::NixError(err) => err.to_string(),
-                ErrorKind::SerdeJSONError(err) => err.to_string(),
-                ErrorKind::ZipError(err) => err.to_string(),
-                ErrorKind::String(err) => err.to_owned(),
-            }
-        )
-    }
-}
-
-// TODO
-// Migrate to HashSet to remove duplication (?)
 type Hosts = HashMap<String, HashSet<String>>;
 
 #[derive(Parser)]

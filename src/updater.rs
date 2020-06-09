@@ -1,5 +1,6 @@
 use crate::os::{HOSTS_BACKUP_PATH, HOSTS_PATH};
-use crate::parser::{parse_from_file, write_to_file, ErrorKind};
+use crate::parser::{parse_from_file, write_to_file};
+use crate::error::ErrorKind;
 use crate::{CURRENT_VERSION, LATEST_VERSION_URL, UPDATE_URL};
 use serde::Deserialize;
 use std::env::{current_dir, current_exe};
@@ -7,6 +8,11 @@ use std::fs;
 use std::io::Read;
 use std::io::Write as _;
 use std::path::Path;
+
+pub fn is_installed() -> bool {
+    // Maybe there are another condition that can be checked
+    is_backed()
+}
 
 pub fn remove_temp_file() {
     let mut tmp_file = current_dir().unwrap();

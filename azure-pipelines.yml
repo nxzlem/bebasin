@@ -86,7 +86,7 @@ stages:
             MD5SUM_WINDOWS="$(md5sum $(Pipeline.Workspace)/release/bebasin-x86_64-pc-windows-msvc.zip | cut -d" " -f1)"
             MD5SUM_LINUX="$(md5sum $(Pipeline.Workspace)/release/bebasin-x86_64-unknown-linux-gnu.zip | cut -d" " -f1)"
             MD5SUM_MACOS="$(md5sum $(Pipeline.Workspace)/release/bebasin-x86_64-apple-darwin.zip | cut -d" " -f1)"
-            VERSION="$(date +%Y%m%d)"
+            VERSION="$(date +%Y%m%d%H%M)"
             LAST_COMMIT_MESSAGE="$(git log -1 --pretty=%B)"
             LATEST_JSON="$(node -e "console.log(JSON.stringify({version: $VERSION, checksum: {linux: \"$MD5SUM_LINUX\", windows: \"$MD5SUM_WINDOWS\", macos: \"$MD5SUM_MACOS\"}}))")"
 

@@ -1,12 +1,18 @@
 use crate::os::{HOSTS_BACKUP_PATH, HOSTS_PATH};
-use crate::parser::{parse_from_file, parse_from_str, write_to_file, ErrorKind};
-use crate::{updater, HOSTS_BEBASIN, HOSTS_HEADER, REPOSITORY_URL};
+use crate::parser::{parse_from_file, parse_from_str, write_to_file};
+use crate::error::ErrorKind;
+use crate::{updater, HOSTS_BEBASIN, HOSTS_HEADER, REPOSITORY_URL, CURRENT_VERSION};
 
 use cursive::views::{Button, Dialog, DummyView, LinearLayout, TextView};
 use cursive::Cursive;
 
 use crate::helpers::AppendableMap;
-use crate::updater::{backup, is_backed};
+use crate::updater::{backup, is_backed, is_installed};
+use std::fs;
+
+fn clear_layer(cursive: &mut Cursive) {
+    while cursive.pop_layer().is_some() {}
+}
 
 fn error(cursive: &mut Cursive, err: ErrorKind) {
     cursive.pop_layer();
@@ -45,38 +51,39 @@ fn install(cursive: &mut Cursive) {
                     merge your hosts file with\n\
                     Bebasin hosts?",
                     )
-                    .title("Confirmation")
-                    .button("Confirm", move |cursive| {
-                        match write_to_file(HOSTS_PATH, &hosts_bebasin, HOSTS_HEADER) {
-                            Err(err) => {
-                                cursive.add_layer(
-                                    Dialog::text(err.to_string()).title("Error").button(
-                                        "Ok",
-                                        |cursive| {
-                                            cursive.pop_layer();
-                                            cursive.pop_layer();
-                                        },
-                                    ),
-                                );
-                            }
-                            _ => {
-                                cursive.add_layer(
-                                    Dialog::text(
-                                        "The hosts file has been updated,\n\
+                        .title("Confirmation")
+                        .button("Confirm", move |cursive| {
+                            match write_to_file(HOSTS_PATH, &hosts_bebasin, HOSTS_HEADER) {
+                                Err(err) => {
+                                    cursive.add_layer(
+                                        Dialog::text(err.to_string()).title("Error").button(
+                                            "Ok",
+                                            |cursive| {
+                                                cursive.pop_layer();
+                                                cursive.pop_layer();
+                                            },
+                                        ),
+                                    );
+                                }
+                                _ => {
+                                    cursive.add_layer(
+                                        Dialog::text(
+                                            "The hosts file has been updated,\n\
                         Please restart your machine",
-                                    )
-                                    .title("Done")
-                                    .button("Ok", |cursive| {
-                                        cursive.pop_layer();
-                                        cursive.pop_layer();
-                                    }),
-                                );
-                            }
-                        };
-                    })
-                    .button("Cancel", |cursive| {
-                        cursive.pop_layer();
-                    });
+                                        )
+                                            .title("Done")
+                                            .button("Ok", |cursive| {
+                                                // Re-create the main menu
+                                                clear_layer(cursive);
+                                                main(cursive);
+                                            }),
+                                    );
+                                }
+                            };
+                        })
+                        .button("Cancel", |cursive| {
+                            cursive.pop_layer();
+                        });
 
                     cursive.add_layer(box_layout);
                 }
@@ -91,8 +98,56 @@ fn install(cursive: &mut Cursive) {
     };
 }
 
-fn open_repository(cursive: &mut Cursive) {
-    if webbrowser::open(REPOSITORY_URL).is_err() {
+fn uninstall_finish(cursive: &mut Cursive) {
+    let layer = Dialog::text(
+        "The hosts file has been updated,\n\
+        Please restart your network/machine",
+    )
+        .title("Done")
+        .button("Ok", |cursive| {
+            cursive.pop_layer();
+
+            // Re-create the main menu
+            clear_layer(cursive);
+            main(cursive);
+        });
+
+    cursive.add_layer(layer);
+}
+
+fn uninstall(cursive: &mut Cursive) {
+    let box_layout = Dialog::text(
+        "Are you sure you want to\n\
+        uninstall Bebasin hosts?",
+    )
+        .title("Confirmation")
+        .button("Confirm", move |cursive| {
+            // 1. Copy the backup to the real hosts
+            // 2. Delete the backup
+            // 3, Remove all temporary file
+            match fs::copy(HOSTS_BACKUP_PATH, HOSTS_PATH) {
+                Ok(_) => {
+                    updater::remove_temp_file();
+
+                    match fs::remove_file(HOSTS_BACKUP_PATH) {
+                        Err(err) => return error(cursive, ErrorKind::IOError(err)),
+                        _ => {}
+                    };
+
+                    uninstall_finish(cursive);
+                }
+                Err(err) => error(cursive, ErrorKind::IOError(err))
+            };
+        })
+        .button("Cancel", |cursive| {
+            cursive.pop_layer();
+        });
+
+    cursive.add_layer(box_layout);
+}
+
+fn open_browser(cursive: &mut Cursive, url: &str) {
+    if webbrowser::open(url).is_err() {
         let layout = Dialog::text("Can't open any browser")
             .title("Error")
             .button("Ok", |cursive| {
@@ -135,33 +190,48 @@ fn update(cursive: &mut Cursive) {
         "Are you sure you want to update to version {}?",
         latest.version
     ))
-    .title("Confirmation")
-    .button("No", |cursive| {
-        cursive.pop_layer();
-    })
-    .button("Yes", move |cursive| match updater_instance.update() {
-        Ok(_) => {
-            let updated_layer =
-                Dialog::text("The application has been updated, please re-run the application")
-                    .button("Ok", |cursive| {
-                        cursive.quit();
-                    });
-            cursive.add_layer(updated_layer);
-        }
-        Err(err) => error(cursive, err),
-    });
+        .title("Confirmation")
+        .button("No", |cursive| {
+            cursive.pop_layer();
+        })
+        .button("Yes", move |cursive| match updater_instance.update() {
+            Ok(_) => {
+                let updated_layer =
+                    Dialog::text("The application has been updated, please re-run the application")
+                        .button("Ok", |cursive| {
+                            cursive.quit();
+                        });
+                cursive.add_layer(updated_layer);
+            }
+            Err(err) => error(cursive, err),
+        });
     cursive.add_layer(confirmation_layer);
 }
 
 pub fn main(cursive: &mut Cursive) {
     let text_header = TextView::new(
-        "If you found any issue or you have a request,\n\
-           please create a new issue on the repository",
+        format!("Bebasin version {}", CURRENT_VERSION)
     );
-    let menu_buttons = LinearLayout::vertical()
-        .child(Button::new("Install", install))
+    let mut menu_buttons = LinearLayout::vertical();
+
+    if is_installed() {
+        menu_buttons = menu_buttons
+            .child(Button::new("Uninstall", uninstall));
+    } else {
+        menu_buttons = menu_buttons
+            .child(Button::new("Install", install));
+    }
+
+    menu_buttons = menu_buttons
         .child(Button::new("Update", update))
-        .child(Button::new("Repository", open_repository))
+        .child(Button::new("Repository", |cursive| {
+            open_browser(cursive, REPOSITORY_URL);
+        }))
+        .child(Button::new("Report a problem", |cursive| {
+            let repository_create_issue_url = &format!("{}/issues/new", REPOSITORY_URL);
+
+            open_browser(cursive, repository_create_issue_url);
+        }))
         .child(DummyView)
         .child(Button::new("Quit", Cursive::quit));
     let layout = Dialog::around(
@@ -170,7 +240,7 @@ pub fn main(cursive: &mut Cursive) {
             .child(DummyView)
             .child(menu_buttons),
     )
-    .title("Menu");
+        .title("Menu");
 
     cursive.add_layer(layout);
 }
