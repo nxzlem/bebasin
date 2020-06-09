@@ -75,7 +75,7 @@ sudo ./bebasin
 - Dapat Diperbaharui
 - *Backup* hosts secara otomatis
 - *Custom* hosts (Belum Diimplementasikan)
-- *Uninstall* (Belum Diimplementasikan)
+- *Uninstall*
 
 ## Tangkapan Layar
 

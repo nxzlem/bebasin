@@ -75,7 +75,7 @@ sudo ./bebasin
 - Updates
 - Auto Backup Hosts
 - Custom Hosts (Coming soon)
-- Uninstall (Coming soon)
+- Uninstall
 
 ## Screenshots
 
