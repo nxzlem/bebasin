@@ -5,6 +5,7 @@ trigger:
   paths:
     exclude:
       - latest.json
+      - src/main.rs
 resources:
   repositories:
     - repository: rust_pipelines
