@@ -28,10 +28,6 @@ const HOSTS_HEADER: &str = include_str!("../misc/header-hosts");
 const HOSTS_BEBASIN: &str = include_str!("../misc/hosts");
 
 fn main() {
-    // let mut u = updater::Updater::new();
-    // u.get_latest_info();
-    // println!("Updateable {:?}", u.is_updatable());
-    // println!("{:?}", u.update());
     updater::remove_temp_file();
 
     app::App::new().dispatch();
