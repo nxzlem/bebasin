@@ -1,6 +1,6 @@
+use crate::error::ErrorKind;
 use crate::os::{HOSTS_BACKUP_PATH, HOSTS_PATH};
 use crate::parser::{parse_from_file, write_to_file};
-use crate::error::ErrorKind;
 use crate::{CURRENT_VERSION, LATEST_VERSION_URL, UPDATE_URL};
 use serde::Deserialize;
 use std::env::{current_dir, current_exe};

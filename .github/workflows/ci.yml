@@ -1,4 +1,4 @@
-name: Sync
+name: Update
 on:
   push:
     paths-ignore:
@@ -74,6 +74,7 @@ jobs:
         uses: montudor/action-zip@v0.1.0
         with:
           args: zip release/bebasin-linux.zip bebasin
+      - run: echo ::set-env name=MD5SUM_LINUX::$(md5sum release/bebasin-linux.zip | cut -d" " -f1)
       
       - name: Download macos artifact
         uses: actions/download-artifact@v2
@@ -84,6 +85,7 @@ jobs:
         uses: montudor/action-zip@v0.1.0
         with:
           args: zip release/bebasin-macos.zip bebasin
+      - run: echo ::set-env name=MD5SUM_MACOS::$(md5sum release/bebasin-macos.zip | cut -d" " -f1)
       
       - name: Download windows artifact
         uses: actions/download-artifact@v2
@@ -94,6 +96,7 @@ jobs:
         uses: montudor/action-zip@v0.1.0
         with:
           args: zip release/bebasin-windows.zip bebasin.exe
+      - run: echo ::set-env name=MD5SUM_WINDOWS::$(md5sum release/bebasin-windows.zip | cut -d" " -f1)
       
       - name: Release artifact
         uses: ncipollo/release-action@v1
@@ -109,11 +112,6 @@ jobs:
           fetch-depth: 1
       - name: Update MD5 sum of latest release
         run: |
-          # Get MD5 sum
-          MD5SUM_WINDOWS="$(md5sum release/bebasin-linux.zip | cut -d" " -f1)"
-          MD5SUM_LINUX="$(md5sum release/bebasin-linux.zip | cut -d" " -f1)"
-          MD5SUM_MACOS="$(md5sum release/bebasin-macos.zip | cut -d" " -f1)"
-          
           # Get the version date
           VERSION="$(date +%Y%m%d%H%M)"
 

@@ -11,8 +11,8 @@ extern crate pest_derive;
 extern crate itertools;
 extern crate zip;
 
-mod error;
 mod app;
+mod error;
 mod helpers;
 mod os;
 mod parser;
