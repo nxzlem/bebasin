@@ -1,0 +1,154 @@
+name: Sync
+on:
+  push:
+    paths-ignore:
+      - latest.json
+      - src/main.rs
+    branch: master
+jobs:
+  build:
+    name: Build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        build: [linux, macos, win-msvc]
+        include:
+          - build: linux
+            os: ubuntu-latest
+            rust: stable
+          - build: macos
+            os: macOS-latest
+            rust: stable
+          - build: win-msvc
+            os: windows-latest
+            rust: stable
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v1
+        with:
+          fetch-depth: 1
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust }}
+          override: true
+          profile: minimal
+      - name: Build release
+        run: cargo build --release --verbose
+      
+      - name: Upload windows artefact
+        if: ${{ matrix.os == 'windows-latest' }}
+        uses: actions/upload-artifact@v1
+        with:
+          name: bebasin-windows
+          path: target/release/bebasin.exe
+      
+      - name: Upload macos artefact
+        if: ${{ matrix.os == 'macOS-latest' }}
+        uses: actions/upload-artifact@v1
+        with:
+          name: bebasin-macos
+          path: target/release/bebasin
+      
+      - name: Upload linux artefact
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        uses: actions/upload-artifact@v1
+        with:
+          name: bebasin-linux
+          path: target/release/bebasin
+
+  release:
+    name: Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create release directory
+        run: mkdir release/
+
+      - name: Download linux artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: bebasin-linux
+          path: .
+      - name: Zip linux artefact
+        uses: montudor/action-zip@v0.1.0
+        with:
+          args: zip release/bebasin-linux.zip bebasin
+      
+      - name: Download macos artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: bebasin-macos
+          path: .
+      - name: Zip macos artefact
+        uses: montudor/action-zip@v0.1.0
+        with:
+          args: zip release/bebasin-macos.zip bebasin
+      
+      - name: Download windows artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: bebasin-windows
+          path: .
+      - name: Zip linux artefact
+        uses: montudor/action-zip@v0.1.0
+        with:
+          args: zip release/bebasin-windows.zip bebasin.exe
+      
+      - name: Release artifact
+        uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true
+          tag: latest
+          artifacts: release/*
+          token: ${{ secrets.ACCESS_TOKEN }}
+      
+      - name: Checkout repository
+        uses: actions/checkout@v1
+        with:
+          fetch-depth: 1
+      - name: Update MD5 sum of latest release
+        run: |
+          # Get MD5 sum
+          MD5SUM_WINDOWS="$(md5sum release/bebasin-linux.zip | cut -d" " -f1)"
+          MD5SUM_LINUX="$(md5sum release/bebasin-linux.zip | cut -d" " -f1)"
+          MD5SUM_MACOS="$(md5sum release/bebasin-macos.zip | cut -d" " -f1)"
+          
+          # Get the version date
+          VERSION="$(date +%Y%m%d%H%M)"
+
+          LAST_COMMIT_MESSAGE="$(git log -1 --pretty=%B)"
+          LATEST_JSON="$(node -e "console.log(JSON.stringify({version: $VERSION, checksum: {linux: \"$MD5SUM_LINUX\", windows: \"$MD5SUM_WINDOWS\", macos: \"$MD5SUM_MACOS\"}}))")"
+
+          git config --global user.email "andra.antariksa+bot@gmail.com"
+          git config --global user.name "Aaabot"
+
+          git clone https://aaabot:${{ secrets.ACCESS_TOKEN }}@github.com/bebasid/bebasin.git bebasin-new
+          cd bebasin-new
+          git remote set-url origin https://aaabot:${{ secrets.ACCESS_TOKEN }}@github.com/bebasid/bebasin.git
+          
+          sed -i -E "s/const CURRENT_VERSION: u64 = [0-9]+;/const CURRENT_VERSION: u64 = ${VERSION};/" src/main.rs
+          echo $LATEST_JSON > latest.json
+          git add latest.json src/main.rs
+          
+          git commit -m "Renew md5sum of latest release"
+          git push origin master
+
+  rustfmt:
+    name: rustfmt
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v1
+        with:
+          fetch-depth: 1
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          profile: minimal
+          components: rustfmt
+      - name: Check formatting
+        run: |
+          cargo fmt -- --check
