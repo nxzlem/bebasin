@@ -353,7 +353,7 @@ impl Updater {
         let latest = &self.latest.as_ref().unwrap();
 
         for asset in release.assets {
-            if asset.name.contains("apple") {
+            if asset.name.contains("macos") {
                 let mut byte_data = Vec::new();
                 let mut curl_instance = curl::easy::Easy::new();
                 curl_instance.url(&asset.browser_download_url).unwrap();
