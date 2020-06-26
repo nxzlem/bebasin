@@ -70,12 +70,12 @@ sudo ./bebasin
 
 ## What's the Difference with BEBASID?
 
-- Terminal User Interface (TUI)
+- *Terminal User Interface (TUI)*
 - Easier to Use
 - Updates
-- Auto Backup Hosts
-- Custom Hosts (Coming soon)
-- Uninstall
+- *Automatic Backup Hosts*
+- *Custom Hosts (Coming soon)*
+- *Uninstall*
 
 ## Screenshots
 
